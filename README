@@ -1,0 +1,15 @@
+A library for manipulating dynamic memory buffers.
+
+The project build assumes a directory structure like this:
+
+src
+|
++-common
+|
++-apps
+|
++-libs
+| |
+| +-libbuffer
+|
++-3rd
