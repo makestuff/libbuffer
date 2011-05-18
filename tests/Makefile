@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-ROOT = ../../..
-DEPS = error
-TYPE = exe
+ROOT    := ../../..
+DEPS    := error
+TYPE    := exe
+SUBDIRS :=
+EXTRA_CLEAN := tmpFile.*
 
 -include $(ROOT)/common/top.mk

@@ -69,11 +69,11 @@ TEST(BinIO_testWriteFile) {
 	CHECK(file.is_open());
 	length = file.tellg();
 	CHECK_EQUAL(strlen(DATA), (size_t)length);
-	fileData = new char[length];
+	fileData = new char[(unsigned int)length];
 	file.seekg(0, ios::beg);
 	file.read(fileData, length);
 	file.close();
-	CHECK_ARRAY_EQUAL(DATA, fileData, length);
+	CHECK_ARRAY_EQUAL(DATA, fileData, (int)length);
 
 	status = bufWriteBinaryFile(&buf, FILENAME, 5, 9, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
@@ -84,7 +84,7 @@ TEST(BinIO_testWriteFile) {
 	file.seekg(0, ios::beg);
 	file.read(fileData, length);
 	file.close();
-	CHECK_ARRAY_EQUAL(DATA+5, fileData, length);
+	CHECK_ARRAY_EQUAL(DATA+5, fileData, (int)length);
 
 	delete[] fileData;
 	bufDestroy(&buf);
