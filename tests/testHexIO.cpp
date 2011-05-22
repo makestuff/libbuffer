@@ -20,7 +20,7 @@
 #include <cstring>
 #include <UnitTest++.h>
 #include "../private.h"
-#include "../buffer.h"
+#include "../libbuffer.h"
 
 using namespace std;
 

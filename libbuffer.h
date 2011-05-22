@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef LIBBUFFER_H
+#define LIBBUFFER_H
 
 #include <stddef.h>
 #include <makestuff.h>
@@ -23,12 +23,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	typedef struct _Buffer {
+	struct Buffer {
 		uint8 *data;
 		uint32 length;
 		uint32 capacity;
 		uint8 fill;
-	} Buffer;
+	};
 	
 	typedef enum {
 		BUF_SUCCESS = 0,
@@ -54,48 +54,48 @@ extern "C" {
 	
 	// Defined in core.c:
 	DLLEXPORT(void) bufDestroy(
-		Buffer *self
+		struct Buffer *self
 	);
 	DLLEXPORT(void) bufZeroLength(
-		Buffer *self
+		struct Buffer *self
 	);
 	DLLEXPORT(BufferStatus) bufInitialise(
-		Buffer *self, uint32 initialSize, uint8 fill, const char **error
+		struct Buffer *self, uint32 initialSize, uint8 fill, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufAppendBlock(
-		Buffer *self, const uint8 *ptr, uint32 count, const char **error
+		struct Buffer *self, const uint8 *ptr, uint32 count, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufAppendByte(
-		Buffer *self, uint8 byte, const char **error
+		struct Buffer *self, uint8 byte, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufAppendZeros(
-		Buffer *self, uint32 count, uint8 **ptr, const char **error
+		struct Buffer *self, uint32 count, uint8 **ptr, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufAppendConst(
-		Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error
+		struct Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufCopyBlock(
-		Buffer *self, uint32 bufAddress, const uint8 *ptr, uint32 count, const char **error
+		struct Buffer *self, uint32 bufAddress, const uint8 *ptr, uint32 count, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufSetBlock(
-		Buffer *self, uint32 bufAddress, uint8 value, uint32 count, const char **error
+		struct Buffer *self, uint32 bufAddress, uint8 value, uint32 count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	// Defined in binio.c:
 	DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
-		Buffer *self, const char *fileName, const char **error
+		struct Buffer *self, const char *fileName, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufWriteBinaryFile(
-		const Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
+		const struct Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
 		const char **error
 	) WARN_UNUSED_RESULT;
 
 	// Defined in hexio.c:
 	DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
-		Buffer *destData, Buffer *destMask, const char *fileName, const char **error
+		struct Buffer *destData, struct Buffer *destMask, const char *fileName, const char **error
 	) WARN_UNUSED_RESULT;
 	DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
-		const Buffer *sourceData, const Buffer *sourceMask,
+		const struct Buffer *sourceData, const struct Buffer *sourceMask,
 		const char *fileName, uint8 lineLength, bool compress, const char **error
 	);
 

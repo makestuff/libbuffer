@@ -18,17 +18,17 @@
 #define PRIVATE_H
 
 #include <makestuff.h>
-#include "buffer.h"
+#include "libbuffer.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 	BufferStatus bufProcessLine(
-		const char *sourceLine, uint32 lineNumber, Buffer *destData, Buffer *destMask,
+		const char *sourceLine, uint32 lineNumber, struct Buffer *destData, struct Buffer *destMask,
 		uint32 *seg, uint8 *recordType, const char **error
 	) WARN_UNUSED_RESULT;
 	BufferStatus bufDeriveMask(
-		const Buffer *sourceData, Buffer *destMask, const char **error
+		const struct Buffer *sourceData, struct Buffer *destMask, const char **error
 	) WARN_UNUSED_RESULT;
 #ifdef __cplusplus
 }

@@ -17,7 +17,7 @@
 #include <string.h>
 #include <fstream>
 #include <UnitTest++.h>
-#include "../buffer.h"
+#include "../libbuffer.h"
 
 using namespace std;
 

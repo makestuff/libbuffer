@@ -18,16 +18,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <liberror.h>
-#include "buffer.h"
-
-#ifdef WIN32
-#pragma warning(disable : 4996)
-#endif
+#include "libbuffer.h"
 
 // Initialise the promRecords structure.
 // Returns BUF_SUCCESS or BUF_NO_MEM.
 //
-DLLEXPORT(BufferStatus) bufInitialise(Buffer *self, uint32 initialSize, uint8 fill, const char **error) {
+DLLEXPORT(BufferStatus) bufInitialise(
+	struct Buffer *self, uint32 initialSize, uint8 fill, const char **error)
+{
 	uint8 *ptr;
 	const uint8 *endPtr;
 	self->fill = fill;
@@ -48,7 +46,7 @@ DLLEXPORT(BufferStatus) bufInitialise(Buffer *self, uint32 initialSize, uint8 fi
 
 // Free up any memory associated with the buffer structure.
 //
-DLLEXPORT(void) bufDestroy(Buffer *self) {
+DLLEXPORT(void) bufDestroy(struct Buffer *self) {
 	free(self->data);
 	self->data = NULL;
 	self->capacity = 0;
@@ -58,7 +56,7 @@ DLLEXPORT(void) bufDestroy(Buffer *self) {
 
 // Clean the buffer structure so it can be reused.
 //
-DLLEXPORT(void) bufZeroLength(Buffer *self) {
+DLLEXPORT(void) bufZeroLength(struct Buffer *self) {
 	uint32 i;
 	self->length = 0;
 	for ( i = 0; i < self->capacity; i++ ) {
@@ -69,7 +67,7 @@ DLLEXPORT(void) bufZeroLength(Buffer *self) {
 // Reallocate the memory for the buffer by doubling the capacity and zeroing the extra storage.
 //
 static BufferStatus reallocate(
-	Buffer *self, uint32 newCapacity, uint32 blockEnd, const char **error)
+	struct Buffer *self, uint32 newCapacity, uint32 blockEnd, const char **error)
 {
 	// The data will not fit in the buffer - we need to make the buffer bigger
 	//
@@ -98,7 +96,9 @@ static BufferStatus reallocate(
 // Write the supplied data to the buffer structure.
 // Returns BUF_SUCCESS or BUF_NO_MEM.
 //
-DLLEXPORT(BufferStatus) bufAppendBlock(Buffer *self, const uint8 *srcPtr, uint32 count, const char **error) {
+DLLEXPORT(BufferStatus) bufAppendBlock(
+	struct Buffer *self, const uint8 *srcPtr, uint32 count, const char **error)
+{
 	const uint32 blockEnd = self->length + count;
 	if ( blockEnd > self->capacity ) {
 		// The data will not fit in the buffer - we need to make the buffer bigger
@@ -113,7 +113,7 @@ DLLEXPORT(BufferStatus) bufAppendBlock(Buffer *self, const uint8 *srcPtr, uint32
 	return BUF_SUCCESS;
 }
 
-DLLEXPORT(BufferStatus) bufAppendByte(Buffer *self, uint8 byte, const char **error) {
+DLLEXPORT(BufferStatus) bufAppendByte(struct Buffer *self, uint8 byte, const char **error) {
 	const uint32 blockEnd = self->length + 1;
 	if ( blockEnd > self->capacity ) {
 		// The data will not fit in the buffer - we need to make the buffer bigger
@@ -130,7 +130,9 @@ DLLEXPORT(BufferStatus) bufAppendByte(Buffer *self, uint8 byte, const char **err
 
 // Append some zeros to the end of the buffer, and return a ptr to the next free byte after the end.
 //
-DLLEXPORT(BufferStatus) bufAppendZeros(Buffer *self, uint32 count, uint8 **ptr, const char **error) {
+DLLEXPORT(BufferStatus) bufAppendZeros(
+	struct Buffer *self, uint32 count, uint8 **ptr, const char **error)
+{
 	const uint32 blockEnd = self->length + count;
 	if ( blockEnd > self->capacity ) {
 		// The data will not fit in the buffer - we need to make the buffer bigger
@@ -148,10 +150,11 @@ DLLEXPORT(BufferStatus) bufAppendZeros(Buffer *self, uint32 count, uint8 **ptr, 
 	return BUF_SUCCESS;
 }
 
-// Append a block of a given constant to the end of the buffer, and return a ptr to the next free byte after the end.
+// Append a block of a given constant to the end of the buffer, and return a ptr to the next free
+// byte after the end.
 //
 DLLEXPORT(BufferStatus) bufAppendConst(
-	Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error)
+	struct Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error)
 {
 	const uint32 blockEnd = self->length + count;
 	if ( blockEnd > self->capacity ) {
@@ -173,7 +176,7 @@ DLLEXPORT(BufferStatus) bufAppendConst(
 // Used by bufCopyBlock() and bufSetBlock() to ensure sufficient capacity for the operation.
 //
 static BufferStatus maybeReallocate(
-	Buffer *const self, const uint32 bufAddress, const uint32 count, const char **error)
+	struct Buffer *const self, const uint32 bufAddress, const uint32 count, const char **error)
 {
 	// There are three possibilities:
 	//   * The block to be written starts after the end of the current buffer
@@ -224,7 +227,7 @@ static BufferStatus maybeReallocate(
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufCopyBlock(
-	Buffer *self, uint32 bufAddress, const uint8 *srcPtr, uint32 count, const char **error)
+	struct Buffer *self, uint32 bufAddress, const uint8 *srcPtr, uint32 count, const char **error)
 {
 	if ( !count ) {
 		return BUF_SUCCESS;
@@ -239,7 +242,7 @@ DLLEXPORT(BufferStatus) bufCopyBlock(
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufSetBlock(
-	Buffer *self, uint32 bufAddress, uint8 value, uint32 count, const char **error)
+	struct Buffer *self, uint32 bufAddress, uint8 value, uint32 count, const char **error)
 {
 	if ( !count ) {
 		return BUF_SUCCESS;

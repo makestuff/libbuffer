@@ -16,13 +16,11 @@
  */
 #include <stdio.h>
 #include <liberror.h>
-#include "buffer.h"
+#include "libbuffer.h"
 
-#ifdef WIN32
-#pragma warning(disable : 4996)
-#endif
-
-DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(Buffer *self, const char *fileName, const char **error) {
+DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
+	struct Buffer *self, const char *fileName, const char **error)
+{
 	BufferStatus bStatus;
 	long length;
 	long actualLength;
@@ -59,7 +57,8 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(Buffer *self, const char *fileNa
 }
 
 DLLEXPORT(BufferStatus) bufWriteBinaryFile(
-	const Buffer *self, const char *fileName, uint32 bufAddress, uint32 count, const char **error)
+	const struct Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
+	const char **error)
 {
 	uint32 actualLength;
 	FILE *file = fopen(fileName, "wb");

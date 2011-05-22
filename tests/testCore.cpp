@@ -16,7 +16,7 @@
  */
 #include <string.h>
 #include <UnitTest++.h>
-#include "../buffer.h"
+#include "../libbuffer.h"
 
 TEST(Core_testInitialiseZero) {
 	Buffer buf;

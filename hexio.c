@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <liberror.h>
-#include "buffer.h"
+#include "libbuffer.h"
 #include "conv.h"
 #include "private.h"
 
@@ -46,8 +46,8 @@ typedef enum {
 //   ExtSeg record: ":02000002AAAASS"
 //
 BufferStatus bufProcessLine(
-	const char *sourceLine, uint32 lineNumber, Buffer *destData, Buffer *destMask, uint32 *segment,
-	uint8 *recordType, const char **error)
+	const char *sourceLine, uint32 lineNumber, struct Buffer *destData, struct Buffer *destMask,
+	uint32 *segment, uint8 *recordType, const char **error)
 {
 	char reconstructedLine[LINE_MAX];
 	uint8 thisByte;
@@ -128,7 +128,9 @@ BufferStatus bufProcessLine(
 	//
 	calculatedChecksum = (uint8)(256 - calculatedChecksum);
 	if ( readChecksum != calculatedChecksum ) {
-		errRender(error, "Read checksum 0x%02X differs from calculated checksum 0x%02X at line %lu", readChecksum, calculatedChecksum, lineNumber);
+		errRender(
+			error, "Read checksum 0x%02X differs from calculated checksum 0x%02X at line %lu",
+			readChecksum, calculatedChecksum, lineNumber);
 		return HEX_BAD_CHECKSUM;
 	}
 	
@@ -143,7 +145,9 @@ BufferStatus bufProcessLine(
 		p++;
 	}
 	if ( strncmp(sourceLine, reconstructedLine, p - sourceLine) ) {
-		errRender(error, "Some corruption detected at line %lu - some junk at the end of the line perhaps?", lineNumber);
+		errRender(
+			error, "Some corruption detected at line %lu - some junk at the end of the line perhaps?",
+			lineNumber);
 		return HEX_CORRUPT_LINE;
 	}
 	
@@ -165,7 +169,9 @@ BufferStatus bufProcessLine(
 		return BUF_SUCCESS;
 	} else if ( *recordType == EXT_SEG_RECORD ) {
 		if ( address != 0x0000 || byteCount != 2 ) {
-			errRender(error, "For record type EXT_SEG_RECORD, address must be 0x0000 and byteCount must be 0x02 at line %lu", lineNumber);
+			errRender(
+				error, "For record type EXT_SEG_RECORD, address must be 0x0000 and byteCount must be 0x02 at line %lu",
+				lineNumber);
 			return HEX_BAD_EXT_SEG;
 		}
 		*segment = ((dataBytes[0] << 8) + dataBytes[1]) << 4;
@@ -188,7 +194,7 @@ BufferStatus bufProcessLine(
 // Read Intel Hex records from a file.
 //
 DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
-	Buffer *destData, Buffer *destMask, const char *fileName, const char **error)
+	struct Buffer *destData, struct Buffer *destMask, const char *fileName, const char **error)
 {
 	uint32 lineNumber;
 	uint32 segment = 0x00000000;
@@ -220,13 +226,15 @@ DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 		return HEX_EMPTY_FILE;
 	}
 	do {
-		status = bufProcessLine(readLine, lineNumber, destData, destMask, &segment, &recordType, error);
+		status = bufProcessLine(
+			readLine, lineNumber, destData, destMask, &segment, &recordType, error);
 		if ( status != BUF_SUCCESS ) {
 			fclose(file);
 			return status;
 		}
 		lineNumber++;
-	} while ( (recordType == DATA_RECORD || recordType == EXT_SEG_RECORD) && fgets(readLine, LINE_MAX, file) );
+	} while ( (recordType == DATA_RECORD || recordType == EXT_SEG_RECORD) &&
+	          fgets(readLine, LINE_MAX, file) );
 
 	// Make sure the file terminated correctly
 	//
@@ -258,7 +266,9 @@ static void writeHexWordBE(uint16 word, FILE *file) {
 	fputc(getHexLowerNibble(word & 0xFF), file);
 }
 
-BufferStatus bufDeriveMask(const Buffer *sourceData, Buffer *destMask, const char **error) {
+BufferStatus bufDeriveMask(
+	const struct Buffer *sourceData, struct Buffer *destMask, const char **error)
+{
 	uint32 address, count, i;
 	BufferStatus bStatus;
 	bufZeroLength(destMask);
@@ -275,7 +285,9 @@ BufferStatus bufDeriveMask(const Buffer *sourceData, Buffer *destMask, const cha
 			break;
 		}
 		count = 1;
-		while ( address + count < destMask->length && sourceData->data[address + count] == sourceData->fill ) {
+		while ( address + count < destMask->length &&
+		        sourceData->data[address + count] == sourceData->fill )
+		{
 			count++;
 		}
 		if ( count >= 8 ) {
@@ -289,14 +301,15 @@ BufferStatus bufDeriveMask(const Buffer *sourceData, Buffer *destMask, const cha
 }
 
 // Write the supplied buffer as Intel hex records with the stated line length to a file, using the
-// supplied mask. If the mask is null, one is derived from the data, either compressed or uncompressed.
+// supplied mask. If the mask is null, one is derived from the data, either compressed or
+// uncompressed.
 //
 DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
-	const Buffer *sourceData, const Buffer *sourceMask, const char *fileName, uint8 lineLength,
-	bool compress, const char **error)
+	const struct Buffer *sourceData, const struct Buffer *sourceMask, const char *fileName,
+	uint8 lineLength, bool compress, const char **error)
 {
 	BufferStatus status, returnCode = BUF_SUCCESS;
-	Buffer tmpSourceMask;
+	struct Buffer tmpSourceMask;
 	bool usedTmpSourceMask = false;
 	uint32 address = 0x00000000;
 	uint32 ceiling = 0x00000000;
@@ -383,7 +396,8 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 				returnCode = HEX_BAD_EXT_SEG;
 				goto cleanupBuffer;
 			}
-			calculatedChecksum = (uint8)(256 - 2 - EXT_SEG_RECORD - (uint8)(segment >> 8) - (segment & 0xFF));
+			calculatedChecksum =
+				(uint8)(256 - 2 - EXT_SEG_RECORD - (uint8)(segment >> 8) - (segment & 0xFF));
 			fwrite(":020000", 1, 7, file);
 			writeHexByte(EXT_SEG_RECORD, file);
 			writeHexWordBE((uint16)segment, file);
