@@ -1,15 +1,12 @@
-A library for manipulating dynamic memory buffers.
+A library for manipulating dynamic memory buffers and loading and saving them as binary and Intel
+hex files.
 
-The project build assumes a directory structure like this:
+See http://bit.ly/buffer-api for the API docs.
 
-src
-|
-+-common
-|
-+-apps
-|
-+-libs
-| |
-| +-libbuffer
-|
-+-3rd
+To build, first you need to install the MakeStuff Build Environment (http://bit.ly/makestuff) for
+your platform, then do:
+
+chris@wotan$ cd makestuff/libs
+chris@wotan$ ../common/msget.sh libbuffer   # or msgit.sh if you want a local git repo
+chris@wotan$ cd libbuffer
+chris@wotan$ make deps
