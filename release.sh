@@ -1,5 +1,21 @@
-# Helper script for building the binary distribution. It's unlikely you'll need this unless you're
-# forking the project.
+#
+# Copyright (C) 2009-2012 Chris McClelland
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Helper script for building the binary distribution. It's unlikely you'll need
+# this unless you're forking the project.
 #
 #!/bin/bash
 export LIB=libbuffer
@@ -7,17 +23,29 @@ export DATE=$(date +%Y%m%d)
 rm -rf ${LIB}-${DATE}
 mkdir ${LIB}-${DATE}
 
+# Linux x86_64 binaries
+mkdir -p ${LIB}-${DATE}/linux.x86_64/rel
+cp -rp linux.x86_64/rel/*.so ${LIB}-${DATE}/linux.x86_64/rel/
+mkdir -p ${LIB}-${DATE}/linux.x86_64/dbg
+cp -rp linux.x86_64/dbg/*.so ${LIB}-${DATE}/linux.x86_64/dbg/
+
 # Linux i686 binaries
 mkdir -p ${LIB}-${DATE}/linux.i686/rel
 cp -rp linux.i686/rel/*.so ${LIB}-${DATE}/linux.i686/rel/
 mkdir -p ${LIB}-${DATE}/linux.i686/dbg
 cp -rp linux.i686/dbg/*.so ${LIB}-${DATE}/linux.i686/dbg/
 
-# Linux x86_64 binaries
-mkdir -p ${LIB}-${DATE}/linux.x86_64/rel
-cp -rp linux.x86_64/rel/*.so ${LIB}-${DATE}/linux.x86_64/rel/
-mkdir -p ${LIB}-${DATE}/linux.x86_64/dbg
-cp -rp linux.x86_64/dbg/*.so ${LIB}-${DATE}/linux.x86_64/dbg/
+# Linux armel binaries
+mkdir -p ${LIB}-${DATE}/linux.armel/rel
+cp -rp linux.armel/rel/*.so ${LIB}-${DATE}/linux.armel/rel/
+mkdir -p ${LIB}-${DATE}/linux.armel/dbg
+cp -rp linux.armel/dbg/*.so ${LIB}-${DATE}/linux.armel/dbg/
+
+# Linux ppc binaries
+mkdir -p ${LIB}-${DATE}/linux.ppc/rel
+cp -rp linux.ppc/rel/*.so ${LIB}-${DATE}/linux.ppc/rel/
+mkdir -p ${LIB}-${DATE}/linux.ppc/dbg
+cp -rp linux.ppc/dbg/*.so ${LIB}-${DATE}/linux.ppc/dbg/
 
 # MacOS binaries
 mkdir -p ${LIB}-${DATE}/darwin/rel
