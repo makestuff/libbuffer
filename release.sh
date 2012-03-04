@@ -67,7 +67,7 @@ cp -rp win32/dbg/*.pdb ${LIB}-${DATE}/win32/dbg/
 cp -rp ../../common/makestuff.h ${LIB}-${DATE}/
 cp -rp ${LIB}.h ${LIB}-${DATE}/
 
-cp -p LICENSE.txt ${LIB}-${DATE}/
+cp -p COPYING COPYING.LESSER ${LIB}-${DATE}/
 cat > ${LIB}-${DATE}/README <<EOF
 LibBuffer Binary Distribution
 
