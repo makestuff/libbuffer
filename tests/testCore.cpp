@@ -439,3 +439,73 @@ TEST(Core_testZeroLength) {
 	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
 	bufDestroy(&buf);
 }
+
+TEST(Core_testCopyConstruct) {
+	Buffer src, dst = {0, 0, 0, 0};
+	BufferStatus status;
+	status = bufInitialise(&src, 8, 23, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 23, 23, 23, 23, 23, 23, 23};
+	status = bufAppendBlock(&src, expected, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, src.capacity);
+	CHECK_EQUAL(9UL, src.length);
+	CHECK_EQUAL(23U, src.fill);
+	CHECK_ARRAY_EQUAL(expected, src.data, 16);
+	status = bufDeepCopy(&dst, &src, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, dst.capacity);
+	CHECK_EQUAL(9UL, dst.length);
+	CHECK_EQUAL(23U, dst.fill);
+	CHECK_ARRAY_EQUAL(expected, dst.data, 16);
+	bufDestroy(&dst);
+	bufDestroy(&src);
+}
+
+TEST(Core_testAssignRealloc) {
+	Buffer src, dst;
+	BufferStatus status;
+	status = bufInitialise(&src, 8, 23, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufInitialise(&dst, 8, 23, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 23, 23, 23, 23, 23, 23, 23};
+	status = bufAppendBlock(&src, expected, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, src.capacity);
+	CHECK_EQUAL(9UL, src.length);
+	CHECK_EQUAL(23U, src.fill);
+	CHECK_ARRAY_EQUAL(expected, src.data, 16);
+	status = bufDeepCopy(&dst, &src, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, dst.capacity);
+	CHECK_EQUAL(9UL, dst.length);
+	CHECK_EQUAL(23U, dst.fill);
+	CHECK_ARRAY_EQUAL(expected, dst.data, 16);
+	bufDestroy(&dst);
+	bufDestroy(&src);
+}
+
+TEST(Core_testAssignNoRealloc) {
+	Buffer src, dst;
+	BufferStatus status;
+	status = bufInitialise(&src, 8, 23, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufInitialise(&dst, 16, 23, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 23, 23, 23, 23, 23, 23, 23};
+	status = bufAppendBlock(&src, expected, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, src.capacity);
+	CHECK_EQUAL(9UL, src.length);
+	CHECK_EQUAL(23U, src.fill);
+	CHECK_ARRAY_EQUAL(expected, src.data, 16);
+	status = bufDeepCopy(&dst, &src, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, dst.capacity);
+	CHECK_EQUAL(9UL, dst.length);
+	CHECK_EQUAL(23U, dst.fill);
+	CHECK_ARRAY_EQUAL(expected, dst.data, 16);
+	bufDestroy(&dst);
+	bufDestroy(&src);
+}

@@ -54,6 +54,38 @@ DLLEXPORT(void) bufDestroy(struct Buffer *self) {
 	self->fill = 0;
 }
 
+// Either deep copy into an already-constructed buffer, or copy-construct into an uninitialised
+// buffer.
+//
+DLLEXPORT(BufferStatus) bufDeepCopy(
+	struct Buffer *dst, const struct Buffer *src, const char **error)
+{
+	uint8 *ptr;
+	const uint8 *endPtr;
+	if ( dst->data && dst->capacity < src->capacity ) {
+		// The dst has been initialised, but there is not enough room for the copy.
+		bufDestroy(dst);
+	}
+	if ( !dst->data ) {
+		// The dst needs to be allocated.
+		dst->capacity = src->capacity;
+		dst->data = (uint8 *)malloc(dst->capacity);
+		if ( !dst->data ) {
+			errRender(error, "Cannot allocate memory for buffer");
+			return BUF_NO_MEM;
+		}
+	}
+	dst->length = src->length;
+	dst->fill = src->fill;
+	memcpy(dst->data, src->data, dst->length);
+	ptr = dst->data + dst->length;
+	endPtr = dst->data + dst->capacity;
+	while ( ptr < endPtr ) {
+		*ptr++ = dst->fill;
+	}
+	return BUF_SUCCESS;
+}
+
 // Clean the buffer structure so it can be reused.
 //
 DLLEXPORT(void) bufZeroLength(struct Buffer *self) {

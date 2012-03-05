@@ -122,6 +122,27 @@ extern "C" {
 	);
 
 	/**
+	 * @brief Assign or copy-construct to a buffer.
+	 *
+	 * Copy the \c src buffer into the \c dst buffer. The \c dst buffer may have already been
+	 * initialised with \c bufInitialise(); if not, all its fields must have been zero'd.
+	 *
+	 * @param dst The buffer to copy into.
+	 * @param src The buffer to copy from.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufDeepCopy(
+		struct Buffer *dst, const struct Buffer *src, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
 	 * @brief Zero the length of the supplied buffer.
 	 *
 	 * Zero the length, but do not free the buffer's memory. Thus, the buffer may be reused without
