@@ -153,6 +153,106 @@ TEST(Core_testAppendByte) {
 	bufDestroy(&buf);
 }
 
+TEST(Core_testAppendWordLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 4, 0xAA, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char expected[] = {
+		0xAD, 0xDE, 0xFE, 0xCA, 0x0D, 0xF0, 0xBE, 0xBA,
+		0x34, 0x12, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA
+	};
+	status = bufAppendWordLE(&buf, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordLE(&buf, 0xCAFE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordLE(&buf, 0xF00D, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordLE(&buf, 0xBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordLE(&buf, 0x1234, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(10UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testAppendWordBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 4, 0xAA, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char expected[] = {
+		0xDE, 0xAD, 0xCA, 0xFE, 0xF0, 0x0D, 0xBA, 0xBE,
+		0x12, 0x34, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA
+	};
+	status = bufAppendWordBE(&buf, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordBE(&buf, 0xCAFE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordBE(&buf, 0xF00D, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordBE(&buf, 0xBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendWordBE(&buf, 0x1234, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(10UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testAppendLongLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 4, 0xAA, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char expected[] = {
+		0xBE, 0xBA, 0xFE, 0xCA, 0x0D, 0xF0, 0xAD, 0xDE,
+		0x78, 0x56, 0x34, 0x12, 0xAA, 0xAA, 0xAA, 0xAA
+	};
+	status = bufAppendLongLE(&buf, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendLongLE(&buf, 0xDEADF00D, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendLongLE(&buf, 0x12345678, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(12UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testAppendLongBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 4, 0xAA, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char expected[] = {
+		0xCA, 0xFE, 0xBA, 0xBE, 0xDE, 0xAD, 0xF0, 0x0D,
+		0x12, 0x34, 0x56, 0x78, 0xAA, 0xAA, 0xAA, 0xAA
+	};
+	status = bufAppendLongBE(&buf, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendLongBE(&buf, 0xDEADF00D, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendLongBE(&buf, 0x12345678, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(12UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
 TEST(Core_testSmallAppendZeros) {
 	Buffer buf;
 	BufferStatus status;
@@ -508,4 +608,49 @@ TEST(Core_testAssignNoRealloc) {
 	CHECK_ARRAY_EQUAL(expected, dst.data, 16);
 	bufDestroy(&dst);
 	bufDestroy(&src);
+}
+
+TEST(Core_testSwap) {
+	Buffer x, y;
+	BufferStatus status;
+	const unsigned char expx[] = {6, 5, 4, 3, 2, 1, 8, 8};
+	const unsigned char expy[] = {1, 2, 3, 9};
+
+	status = bufInitialise(&x, 4, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufInitialise(&y, 4, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	status = bufAppendByte(&x, 1, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&x, 2, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&x, 3, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	status = bufAppendByte(&y, 6, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&y, 5, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&y, 4, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&y, 3, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&y, 2, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	status = bufAppendByte(&y, 1, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	bufSwap(&x, &y);
+
+	CHECK_EQUAL(8UL, x.capacity);
+	CHECK_EQUAL(6UL, x.length);
+	CHECK_ARRAY_EQUAL(expx, x.data, 8);
+
+	CHECK_EQUAL(4UL, y.capacity);
+	CHECK_EQUAL(3UL, y.length);
+	CHECK_ARRAY_EQUAL(expy, y.data, 4);
+
+	bufDestroy(&x);
+	bufDestroy(&y);
 }

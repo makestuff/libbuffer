@@ -86,6 +86,25 @@ DLLEXPORT(BufferStatus) bufDeepCopy(
 	return BUF_SUCCESS;
 }
 
+DLLEXPORT(void) bufSwap(
+	struct Buffer *x, struct Buffer *y)
+{
+	uint8 *const tmpData = x->data;
+	const uint32 tmpLength = x->length;
+	const uint32 tmpCapacity = x->capacity;
+	const uint8 tmpFill = x->fill;
+
+	x->data = y->data;
+	x->length = y->length;
+	x->capacity = y->capacity;
+	x->fill = y->fill;
+
+	y->data = tmpData;
+	y->length = tmpLength;
+	y->capacity = tmpCapacity;
+	y->fill = tmpFill;
+}
+
 // Clean the buffer structure so it can be reused.
 //
 DLLEXPORT(void) bufZeroLength(struct Buffer *self) {
@@ -125,6 +144,16 @@ static BufferStatus reallocate(
 	return BUF_SUCCESS;
 }
 
+// If the data will not fit in the buffer, make the buffer bigger
+//
+#define ENSURE_CAPACITY() \
+	if ( blockEnd > self->capacity ) { \
+		BufferStatus status = reallocate(self, self->capacity, blockEnd, error); \
+		if ( status != BUF_SUCCESS ) { \
+			return status; \
+		} \
+	}
+
 // Write the supplied data to the buffer structure.
 // Returns BUF_SUCCESS or BUF_NO_MEM.
 //
@@ -132,14 +161,7 @@ DLLEXPORT(BufferStatus) bufAppendBlock(
 	struct Buffer *self, const uint8 *srcPtr, uint32 count, const char **error)
 {
 	const uint32 blockEnd = self->length + count;
-	if ( blockEnd > self->capacity ) {
-		// The data will not fit in the buffer - we need to make the buffer bigger
-		//
-		BufferStatus status = reallocate(self, self->capacity, blockEnd, error);
-		if ( status != BUF_SUCCESS ) {
-			return status;
-		}
-	}
+	ENSURE_CAPACITY();
 	memcpy(self->data + self->length, srcPtr, count);
 	self->length = blockEnd;
 	return BUF_SUCCESS;
@@ -147,16 +169,93 @@ DLLEXPORT(BufferStatus) bufAppendBlock(
 
 DLLEXPORT(BufferStatus) bufAppendByte(struct Buffer *self, uint8 byte, const char **error) {
 	const uint32 blockEnd = self->length + 1;
-	if ( blockEnd > self->capacity ) {
-		// The data will not fit in the buffer - we need to make the buffer bigger
-		//
-		BufferStatus status = reallocate(self, self->capacity, blockEnd, error);
-		if ( status != BUF_SUCCESS ) {
-			return status;
-		}
-	}
+	ENSURE_CAPACITY();
 	*(self->data + self->length) = byte;
 	self->length++;
+	return BUF_SUCCESS;
+}
+
+DLLEXPORT(BufferStatus) bufAppendWordLE(struct Buffer *self, uint16 word, const char **error) {
+	const uint32 blockEnd = self->length + 2;
+	union {
+		uint16 word;
+		uint8 byte[2];
+	} u;
+	u.word = word;
+	ENSURE_CAPACITY();
+	#if BYTE_ORDER == 1234
+		*(self->data + self->length) = u.byte[0];
+		*(self->data + self->length + 1) = u.byte[1];
+	#else
+		*(self->data + self->length) = u.byte[1];
+		*(self->data + self->length + 1) = u.byte[0];
+	#endif
+	self->length += 2;
+	return BUF_SUCCESS;
+}
+
+DLLEXPORT(BufferStatus) bufAppendWordBE(struct Buffer *self, uint16 word, const char **error) {
+	const uint32 blockEnd = self->length + 2;
+	union {
+		uint16 word;
+		uint8 byte[2];
+	} u;
+	u.word = word;
+	ENSURE_CAPACITY();
+	#if BYTE_ORDER == 1234
+		*(self->data + self->length) = u.byte[1];
+		*(self->data + self->length + 1) = u.byte[0];
+	#else
+		*(self->data + self->length) = u.byte[0];
+		*(self->data + self->length + 1) = u.byte[1];
+	#endif
+	self->length += 2;
+	return BUF_SUCCESS;
+}
+
+DLLEXPORT(BufferStatus) bufAppendLongLE(struct Buffer *self, uint32 lword, const char **error) {
+	const uint32 blockEnd = self->length + 4;
+	union {
+		uint32 lword;
+		uint8 byte[4];
+	} u;
+	u.lword = lword;
+	ENSURE_CAPACITY();
+	#if BYTE_ORDER == 1234
+		*(self->data + self->length) = u.byte[0];
+		*(self->data + self->length + 1) = u.byte[1];
+		*(self->data + self->length + 2) = u.byte[2];
+		*(self->data + self->length + 3) = u.byte[3];
+	#else
+		*(self->data + self->length) = u.byte[3];
+		*(self->data + self->length + 1) = u.byte[2];
+		*(self->data + self->length + 2) = u.byte[1];
+		*(self->data + self->length + 3) = u.byte[0];
+	#endif
+	self->length += 4;
+	return BUF_SUCCESS;
+}
+
+DLLEXPORT(BufferStatus) bufAppendLongBE(struct Buffer *self, uint32 lword, const char **error) {
+	const uint32 blockEnd = self->length + 4;
+	union {
+		uint32 lword;
+		uint8 byte[4];
+	} u;
+	u.lword = lword;
+	ENSURE_CAPACITY();
+	#if BYTE_ORDER == 1234
+		*(self->data + self->length) = u.byte[3];
+		*(self->data + self->length + 1) = u.byte[2];
+		*(self->data + self->length + 2) = u.byte[1];
+		*(self->data + self->length + 3) = u.byte[0];
+	#else
+		*(self->data + self->length) = u.byte[0];
+		*(self->data + self->length + 1) = u.byte[1];
+		*(self->data + self->length + 2) = u.byte[2];
+		*(self->data + self->length + 3) = u.byte[3];
+	#endif
+	self->length += 4;
 	return BUF_SUCCESS;
 }
 
@@ -166,14 +265,7 @@ DLLEXPORT(BufferStatus) bufAppendZeros(
 	struct Buffer *self, uint32 count, uint8 **ptr, const char **error)
 {
 	const uint32 blockEnd = self->length + count;
-	if ( blockEnd > self->capacity ) {
-		// The data will not fit in the buffer - we need to make the buffer bigger
-		//
-		BufferStatus status = reallocate(self, self->capacity, blockEnd, error);
-		if ( status != BUF_SUCCESS ) {
-			return status;
-		}
-	}
+	ENSURE_CAPACITY();
 	memset(self->data + self->length, 0x00, count);
 	if ( ptr ) {
 		*ptr = self->data + self->length;
@@ -189,14 +281,7 @@ DLLEXPORT(BufferStatus) bufAppendConst(
 	struct Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error)
 {
 	const uint32 blockEnd = self->length + count;
-	if ( blockEnd > self->capacity ) {
-		// The data will not fit in the buffer - we need to make the buffer bigger
-		//
-		BufferStatus status = reallocate(self, self->capacity, blockEnd, error);
-		if ( status != BUF_SUCCESS ) {
-			return status;
-		}
-	}
+	ENSURE_CAPACITY();
 	memset(self->data + self->length, value, count);
 	if ( ptr ) {
 		*ptr = self->data + self->length;
@@ -220,14 +305,7 @@ static BufferStatus maybeReallocate(
 		// Begins outside - reallocation may be necessary, zeroing definitely necessary
 		//
 		uint8 *ptr, *endPtr;
-		if ( blockEnd > self->capacity ) {
-			// The data will not fit in the buffer - we need to make the buffer bigger
-			//
-			BufferStatus status = reallocate(self, self->capacity, blockEnd, error);
-			if ( status != BUF_SUCCESS ) {
-				return status;
-			}
-		}
+		ENSURE_CAPACITY();
 		
 		// Now fill from the end of the old length to the start of the block
 		//
@@ -241,15 +319,7 @@ static BufferStatus maybeReallocate(
 	} else if ( bufAddress < self->length && blockEnd > self->length ) {
 		// Begins inside, ends outside - reallocation and zeroing may be necessary
 		//
-		if ( blockEnd > self->capacity ) {
-			// The data will not fit in the buffer - we need to make the buffer bigger
-			//
-			BufferStatus status = reallocate(self, self->capacity, blockEnd, error);
-			if ( status != BUF_SUCCESS ) {
-				return status;
-			}
-		}
-		
+		ENSURE_CAPACITY();
 		self->length = blockEnd;
 	}
 	return BUF_SUCCESS;

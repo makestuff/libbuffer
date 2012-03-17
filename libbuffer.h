@@ -143,6 +143,23 @@ extern "C" {
 	) WARN_UNUSED_RESULT;
 
 	/**
+	 * @brief Swap the data owned by two Buffers.
+	 *
+	 * Reassign the \c x buffer to the \c y buffer, and vice-versa.
+	 *
+	 * @param x The first buffer.
+	 * @param y The second buffer.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 */
+	DLLEXPORT(void) bufSwap(
+		struct Buffer *x, struct Buffer *y
+	);
+
+	/**
 	 * @brief Zero the length of the supplied buffer.
 	 *
 	 * Zero the length, but do not free the buffer's memory. Thus, the buffer may be reused without
@@ -172,6 +189,86 @@ extern "C" {
 	 */
 	DLLEXPORT(BufferStatus) bufAppendByte(
 		struct Buffer *self, uint8 byte, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Append a uint16 to the end of a buffer in little-endian format.
+	 *
+	 * Reallocate the buffer if necessary.
+	 *
+	 * @param self The buffer to append to.
+	 * @param word The uint16 to append.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufAppendWordLE(
+		struct Buffer *self, uint16 word, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Append a uint16 to the end of a buffer in big-endian format.
+	 *
+	 * Reallocate the buffer if necessary.
+	 *
+	 * @param self The buffer to append to.
+	 * @param word The uint16 to append.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufAppendWordBE(
+		struct Buffer *self, uint16 word, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Append a uint32 to the end of a buffer in little-endian format.
+	 *
+	 * Reallocate the buffer if necessary.
+	 *
+	 * @param self The buffer to append to.
+	 * @param lword The uint32 to append.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufAppendLongLE(
+		struct Buffer *self, uint32 lword, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Append a uint32 to the end of a buffer in big-endian format.
+	 *
+	 * Reallocate the buffer if necessary.
+	 *
+	 * @param self The buffer to append to.
+	 * @param lword The uint32 to append.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufAppendLongBE(
+		struct Buffer *self, uint32 lword, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
