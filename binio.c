@@ -24,6 +24,7 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 	BufferStatus bStatus;
 	long length;
 	long actualLength;
+	const uint32 currentLength = self->length;
 	uint8 *ptr;
 	FILE *file = fopen(fileName, "rb");
 	if ( !file ) {
@@ -35,13 +36,13 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 		return BUF_FSEEK;
 	}
 	length = ftell(file);
-	bStatus = bufAppendConst(self, length, 0x00, &ptr, error);
+	bStatus = bufAppendConst(self, 0x00, length, error);
 	if ( bStatus != BUF_SUCCESS ) {
 		fclose(file);
 		return bStatus;
 	}
 	rewind(file);
-	actualLength = fread(ptr, 1, length, file);
+	actualLength = fread(self->data + currentLength, 1, length, file);
 	if ( actualLength != length ) {
 		fclose(file);
 		if ( feof(file) ) {

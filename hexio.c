@@ -154,12 +154,12 @@ BufferStatus bufProcessLine(
 	if ( *recordType == DATA_RECORD ) {
 		// Write into the binary buffer
 		//
-		status = bufCopyBlock(destData, *segment + address, dataBytes, byteCount, error);
+		status = bufWriteBlock(destData, *segment + address, dataBytes, byteCount, error);
 		if ( status != BUF_SUCCESS ) {
 			return status;
 		}
 		if ( destMask ) {
-			status = bufSetBlock(destMask, *segment + address, 0x01, byteCount, error);
+			status = bufWriteConst(destMask, *segment + address, 0x01, byteCount, error);
 			if ( status != BUF_SUCCESS ) {
 				return status;
 			}
@@ -272,7 +272,7 @@ BufferStatus bufDeriveMask(
 	uint32 address, count, i;
 	BufferStatus bStatus;
 	bufZeroLength(destMask);
-	bStatus = bufAppendConst(destMask, sourceData->length, 0x01, NULL, error);
+	bStatus = bufAppendConst(destMask, 0x01, sourceData->length, error);
 	if ( bStatus != BUF_SUCCESS ) {
 		return bStatus;
 	}
@@ -339,7 +339,7 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 				goto cleanupBuffer;
 			}
 		} else {
-			status = bufAppendConst(&tmpSourceMask, sourceData->length, 0x01, NULL, error);
+			status = bufAppendConst(&tmpSourceMask, 0x01, sourceData->length, error);
 			if ( status != BUF_SUCCESS ) {
 				returnCode = status;
 				goto cleanupBuffer;

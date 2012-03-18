@@ -256,162 +256,144 @@ TEST(Core_testAppendLongBE) {
 TEST(Core_testSmallAppendZeros) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	const unsigned char expected[] = {1, 2, 0, 0, 0, 0, 7, 8};
 	status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 8);
 	buf.length = 2;
-	status = bufAppendZeros(&buf, 4, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x00, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(6UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testCapacityAppendZeros) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	const unsigned char expected[] = {1, 2, 0, 0, 0, 0, 0, 0};
 	status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 8);
 	buf.length = 2;
-	status = bufAppendZeros(&buf, 6, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x00, 6, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(8UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testLargeAppendZeros) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	const unsigned char expected[] = {1, 2, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0};
 	status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 8);
 	buf.length = 2;
-	status = bufAppendZeros(&buf, 7, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x00, 7, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(9UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testVeryLargeAppendZeros) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4};
 	const unsigned char expected[] = {1, 2, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0};
 	status = bufInitialise(&buf, 4, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 4);
 	buf.length = 2;
-	status = bufAppendZeros(&buf, 14, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x00, 14, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(16UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testSmallAppendConst) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	const unsigned char expected[] = {1, 2, 9, 9, 9, 9, 7, 8};
 	status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 8);
 	buf.length = 2;
-	status = bufAppendConst(&buf, 4, 9, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x09, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(6UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testCapacityAppendConst) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	const unsigned char expected[] = {1, 2, 9, 9, 9, 9, 9, 9};
 	status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 8);
 	buf.length = 2;
-	status = bufAppendConst(&buf, 6, 9, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x09, 6, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(8UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testLargeAppendConst) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	const unsigned char expected[] = {1, 2, 9, 9,  9, 9, 9, 9,  9, 0, 0, 0,  0, 0, 0, 0};
 	status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 8);
 	buf.length = 2;
-	status = bufAppendConst(&buf, 7, 9, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x09, 7, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(9UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testVeryLargeAppendConst) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	const unsigned char junk[] = {1, 2, 3, 4};
 	const unsigned char expected[] = {1, 2, 9, 9,  9, 9, 9, 9,  9, 9, 9, 9,  9, 9, 9, 9};
 	status = bufInitialise(&buf, 4, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	memcpy(buf.data, junk, 4);
 	buf.length = 2;
-	status = bufAppendConst(&buf, 14, 9, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x09, 14, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(16UL, buf.length);
 	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
-	CHECK_EQUAL(buf.data+2, ptr);
 	bufDestroy(&buf);
 }
 
 TEST(Core_testHugeAppendConst) {
 	Buffer buf;
 	BufferStatus status;
-	unsigned char *ptr;
 	status = bufInitialise(&buf, 4, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
-	status = bufAppendConst(&buf, 0x18000, 9, &ptr, NULL);
+	status = bufAppendConst(&buf, 0x09, 0x18000, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(0x18000UL, buf.length);
 	CHECK_EQUAL(0x20000UL, buf.capacity);
-	CHECK_EQUAL(buf.data, ptr);
 	bufDestroy(&buf);
 }
 
-TEST(Core_testInsideCopyBlock) {
+TEST(Core_testInsideWriteBlock) {
 	Buffer buf;
 	BufferStatus status;
 
@@ -422,7 +404,7 @@ TEST(Core_testInsideCopyBlock) {
 	status = bufAppendBlock(&buf, initData, 8, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	const unsigned char expected[] = {1, 2, 3, 4, 1, 2, 3, 4};
-	status = bufCopyBlock(&buf, 4, expected+4, 4, NULL);
+	status = bufWriteBlock(&buf, 4, expected+4, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(8UL, buf.capacity);
 	CHECK_EQUAL(8UL, buf.length);
@@ -430,7 +412,7 @@ TEST(Core_testInsideCopyBlock) {
 	bufDestroy(&buf);
 }
 
-TEST(Core_testOutsideCopyBlock) {
+TEST(Core_testOutsideWriteBlock) {
 	Buffer buf;
 	BufferStatus status;
 
@@ -441,7 +423,7 @@ TEST(Core_testOutsideCopyBlock) {
 	status = bufAppendBlock(&buf, initData, 8, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 8,  0, 0, 0, 0,  1, 2, 3, 4};
-	status = bufCopyBlock(&buf, 12, expected+12, 4, NULL);
+	status = bufWriteBlock(&buf, 12, expected+12, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(16UL, buf.capacity);
 	CHECK_EQUAL(16UL, buf.length);
@@ -449,7 +431,7 @@ TEST(Core_testOutsideCopyBlock) {
 	bufDestroy(&buf);
 }
 
-TEST(Core_testStraddledCopyBlock) {
+TEST(Core_testStraddledWriteBlock) {
 	Buffer buf;
 	BufferStatus status;
 
@@ -460,7 +442,7 @@ TEST(Core_testStraddledCopyBlock) {
 	status = bufAppendBlock(&buf, initData, 8, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 1,  2, 3, 4, 0,  0, 0, 0, 0};
-	status = bufCopyBlock(&buf, 7, expected+7, 4, NULL);
+	status = bufWriteBlock(&buf, 7, expected+7, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(16UL, buf.capacity);
 	CHECK_EQUAL(11UL, buf.length);
@@ -468,7 +450,7 @@ TEST(Core_testStraddledCopyBlock) {
 	bufDestroy(&buf);
 }
 
-TEST(Core_testInsideSetBlock) {
+TEST(Core_testInsideWriteConst) {
 	Buffer buf;
 	BufferStatus status;
 
@@ -479,7 +461,7 @@ TEST(Core_testInsideSetBlock) {
 	status = bufAppendBlock(&buf, initData, 8, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	const unsigned char expected[] = {1, 2, 3, 4, 9, 9, 9, 9};
-	status = bufSetBlock(&buf, 4, 9, 4, NULL);
+	status = bufWriteConst(&buf, 4, 9, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(8UL, buf.capacity);
 	CHECK_EQUAL(8UL, buf.length);
@@ -487,7 +469,7 @@ TEST(Core_testInsideSetBlock) {
 	bufDestroy(&buf);
 }
 
-TEST(Core_testOutsideSetBlock) {
+TEST(Core_testOutsideWriteConst) {
 	Buffer buf;
 	BufferStatus status;
 
@@ -498,7 +480,7 @@ TEST(Core_testOutsideSetBlock) {
 	status = bufAppendBlock(&buf, initData, 8, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 8,  0, 0, 0, 0,  9, 9, 9, 9};
-	status = bufSetBlock(&buf, 12, 9, 4, NULL);
+	status = bufWriteConst(&buf, 12, 9, 4, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(16UL, buf.capacity);
 	CHECK_EQUAL(16UL, buf.length);
@@ -506,7 +488,7 @@ TEST(Core_testOutsideSetBlock) {
 	bufDestroy(&buf);
 }
 
-TEST(Core_testStraddledSetBlock) {
+TEST(Core_testStraddledWriteConst) {
 	Buffer buf;
 	BufferStatus status;
 
@@ -517,7 +499,235 @@ TEST(Core_testStraddledSetBlock) {
 	status = bufAppendBlock(&buf, initData, 8, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 9,  9, 9, 9, 0,  0, 0, 0, 0};
-	status = bufSetBlock(&buf, 7, 9, 4, NULL);
+	status = bufWriteConst(&buf, 7, 9, 4, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(11UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testInsideWriteWordLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 0xAD, 0xDE, 7, 8};
+	status = bufWriteWordLE(&buf, 4, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(8UL, buf.capacity);
+	CHECK_EQUAL(8UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testOutsideWriteWordLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 8,  9, 9, 9, 9,  0xAD, 0xDE, 9, 9};
+	status = bufWriteWordLE(&buf, 12, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(14UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testStraddledWriteWordLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 0xAD,  0xDE, 9, 9, 9,  9, 9, 9, 9};
+	status = bufWriteWordLE(&buf, 7, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(9UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testInsideWriteWordBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 0xDE, 0xAD, 7, 8};
+	status = bufWriteWordBE(&buf, 4, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(8UL, buf.capacity);
+	CHECK_EQUAL(8UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testOutsideWriteWordBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 8,  9, 9, 9, 9,  0xDE, 0xAD, 9, 9};
+	status = bufWriteWordBE(&buf, 12, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(14UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testStraddledWriteWordBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 0xDE,  0xAD, 9, 9, 9,  9, 9, 9, 9};
+	status = bufWriteWordBE(&buf, 7, 0xDEAD, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(9UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testInsideWriteLongLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 0xBE, 0xBA, 0xFE, 0xCA};
+	status = bufWriteLongLE(&buf, 4, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(8UL, buf.capacity);
+	CHECK_EQUAL(8UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testOutsideWriteLongLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 8,  9, 9, 9, 9,  0xBE, 0xBA, 0xFE, 0xCA};
+	status = bufWriteLongLE(&buf, 12, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(16UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testStraddledWriteLongLE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 0xBE,  0xBA, 0xFE, 0xCA, 9,  9, 9, 9, 9};
+	status = bufWriteLongLE(&buf, 7, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(11UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testInsideWriteLongBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4, 0xCA, 0xFE, 0xBA, 0xBE};
+	status = bufWriteLongBE(&buf, 4, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(8UL, buf.capacity);
+	CHECK_EQUAL(8UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 8);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testOutsideWriteLongBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 8,  9, 9, 9, 9,  0xCA, 0xFE, 0xBA, 0xBE};
+	status = bufWriteLongBE(&buf, 12, 0xCAFEBABE, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	CHECK_EQUAL(16UL, buf.capacity);
+	CHECK_EQUAL(16UL, buf.length);
+	CHECK_ARRAY_EQUAL(expected, buf.data, 16);
+	bufDestroy(&buf);
+}
+
+TEST(Core_testStraddledWriteLongBE) {
+	Buffer buf;
+	BufferStatus status;
+
+	status = bufInitialise(&buf, 8, 9, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+
+	const unsigned char initData[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	status = bufAppendBlock(&buf, initData, 8, NULL);
+	CHECK_EQUAL(BUF_SUCCESS, status);
+	const unsigned char expected[] = {1, 2, 3, 4,  5, 6, 7, 0xCA,  0xFE, 0xBA, 0xBE, 9,  9, 9, 9, 9};
+	status = bufWriteLongBE(&buf, 7, 0xCAFEBABE, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(16UL, buf.capacity);
 	CHECK_EQUAL(11UL, buf.length);

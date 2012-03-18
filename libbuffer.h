@@ -149,11 +149,6 @@ extern "C" {
 	 *
 	 * @param x The first buffer.
 	 * @param y The second buffer.
-	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
-	 *            error message if something goes wrong. Responsibility for this allocated memory
-	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
-	 *            \c NULL, no allocation is done and no message is returned, but the return code
-	 *            will still be valid.
 	 */
 	DLLEXPORT(void) bufSwap(
 		struct Buffer *x, struct Buffer *y
@@ -272,13 +267,34 @@ extern "C" {
 	) WARN_UNUSED_RESULT;
 
 	/**
+	 * @brief Append a block of identical bytes to the end of a buffer.
+	 *
+	 * Reallocate the buffer if necessary.
+	 *
+	 * @param self The buffer to append to.
+	 * @param value The byte value to append.
+	 * @param count The number of bytes to append.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufAppendConst(
+		struct Buffer *self, uint8 value, uint32 count, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
 	 * @brief Append a block of bytes to the end of a buffer.
 	 *
 	 * Reallocate the buffer if necessary.
 	 *
 	 * @param self The buffer to append to.
 	 * @param ptr A pointer to the block of bytes to append.
-	 * @param count The number of bytes to append.
+	 * @param count The number of bytes to copy.
 	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
 	 *            error message if something goes wrong. Responsibility for this allocated memory
 	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
@@ -293,14 +309,14 @@ extern "C" {
 	) WARN_UNUSED_RESULT;
 
 	/**
-	 * @brief Append a block of zero bytes to the end of a buffer.
+	 * @brief Write a single byte into a buffer at a given offset.
 	 *
-	 * Reallocate the buffer if necessary.
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
 	 *
-	 * @param self The buffer to append to.
-	 * @param count The number of zero bytes to append.
-	 * @param ptr A pointer to a <code>uint8*</code> which will be set on exit to the new end of the
-	 *            buffer's data. May be \c NULL.
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param byte The byte to write.
 	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
 	 *            error message if something goes wrong. Responsibility for this allocated memory
 	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
@@ -310,20 +326,19 @@ extern "C" {
 	 *     - \c BUF_SUCCESS if the operation completed successfully.
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
-	DLLEXPORT(BufferStatus) bufAppendZeros(
-		struct Buffer *self, uint32 count, uint8 **ptr, const char **error
+	DLLEXPORT(BufferStatus) bufWriteByte(
+		struct Buffer *self, uint32 offset, uint8 byte, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
-	 * @brief Append a block of identical bytes to the end of a buffer.
+	 * @brief Write a uint16 into a buffer at a given offset in little-endian format.
 	 *
-	 * Reallocate the buffer if necessary.
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
 	 *
-	 * @param self The buffer to append to.
-	 * @param count The number of zero bytes to append.
-	 * @param value The byte value to append.
-	 * @param ptr A pointer to a <code>uint8*</code> which will be set on exit to the new end of the
-	 *            buffer's data. May be \c NULL.
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param word The uint16 to write.
 	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
 	 *            error message if something goes wrong. Responsibility for this allocated memory
 	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
@@ -333,19 +348,108 @@ extern "C" {
 	 *     - \c BUF_SUCCESS if the operation completed successfully.
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
-	DLLEXPORT(BufferStatus) bufAppendConst(
-		struct Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error
+	DLLEXPORT(BufferStatus) bufWriteWordLE(
+		struct Buffer *self, uint32 offset, uint16 word, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
-	 * @brief Copy a block of bytes into a buffer at a given offset.
+	 * @brief Write a uint16 into a buffer at a given offset in big-endian format.
 	 *
-	 * Reallocate the buffer if necessary. If the destination of the copy is off the end of the
-	 * current buffer, the buffer will first be resized and the "hole" set to the fill byte.
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
 	 *
-	 * @param self The buffer to copy to.
-	 * @param bufAddress The destination offset into the buffer.
-	 * @param ptr A pointer to the source bytes.
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param word The uint16 to write.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufWriteWordBE(
+		struct Buffer *self, uint32 offset, uint16 word, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Write a uint32 into a buffer at a given offset in little-endian format.
+	 *
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
+	 *
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param lword The uint32 to write.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufWriteLongLE(
+		struct Buffer *self, uint32 offset, uint32 lword, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Write a uint32 into a buffer at a given offset in big-endian format.
+	 *
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
+	 *
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param lword The uint32 to write.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufWriteLongBE(
+		struct Buffer *self, uint32 offset, uint32 lword, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Write a block of identical bytes into a buffer at a given offset.
+	 *
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
+	 *
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param value The byte value to write.
+	 * @param count The number of duplicate bytes to write.
+	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
+	 *            error message if something goes wrong. Responsibility for this allocated memory
+	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
+	 *            \c NULL, no allocation is done and no message is returned, but the return code
+	 *            will still be valid.
+	 * @returns
+	 *     - \c BUF_SUCCESS if the operation completed successfully.
+	 *     - \c BUF_NO_MEM if an allocation error occurred.
+	 */
+	DLLEXPORT(BufferStatus) bufWriteConst(
+		struct Buffer *self, uint32 offset, uint8 value, uint32 count, const char **error
+	) WARN_UNUSED_RESULT;
+
+	/**
+	 * @brief Write a block of bytes into a buffer at a given offset.
+	 *
+	 * Reallocate the buffer if necessary. If the destination offset is off the end of the current
+	 * buffer, the buffer will first be resized and the "hole" set to the fill byte.
+	 *
+	 * @param self The buffer to write to.
+	 * @param offset The destination offset into the buffer.
+	 * @param ptr A pointer to the block of bytes to copy into the buffer.
 	 * @param count The number of bytes to copy.
 	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
 	 *            error message if something goes wrong. Responsibility for this allocated memory
@@ -356,31 +460,8 @@ extern "C" {
 	 *     - \c BUF_SUCCESS if the operation completed successfully.
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
-	DLLEXPORT(BufferStatus) bufCopyBlock(
-		struct Buffer *self, uint32 bufAddress, const uint8 *ptr, uint32 count, const char **error
-	) WARN_UNUSED_RESULT;
-
-	/**
-	 * @brief Set a specific block of bytes to a given value.
-	 *
-	 * Reallocate the buffer if necessary. If the block is off the end of the current buffer, the
-	 * buffer will first be resized and the "hole" set to the fill byte.
-	 *
-	 * @param self The buffer to copy to.
-	 * @param bufAddress The destination offset into the buffer.
-	 * @param value The data byte to set the block to.
-	 * @param count The number of bytes to set.
-	 * @param error A pointer to a <code>char*</code> which will be set on exit to an allocated
-	 *            error message if something goes wrong. Responsibility for this allocated memory
-	 *            passes to the caller and must be freed with \c bufFreeError(). If \c error is
-	 *            \c NULL, no allocation is done and no message is returned, but the return code
-	 *            will still be valid.
-	 * @returns
-	 *     - \c BUF_SUCCESS if the operation completed successfully.
-	 *     - \c BUF_NO_MEM if an allocation error occurred.
-	 */
-	DLLEXPORT(BufferStatus) bufSetBlock(
-		struct Buffer *self, uint32 bufAddress, uint8 value, uint32 count, const char **error
+	DLLEXPORT(BufferStatus) bufWriteBlock(
+		struct Buffer *self, uint32 offset, const uint8 *ptr, uint32 count, const char **error
 	) WARN_UNUSED_RESULT;
 	//@}
 

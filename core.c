@@ -154,19 +154,6 @@ static BufferStatus reallocate(
 		} \
 	}
 
-// Write the supplied data to the buffer structure.
-// Returns BUF_SUCCESS or BUF_NO_MEM.
-//
-DLLEXPORT(BufferStatus) bufAppendBlock(
-	struct Buffer *self, const uint8 *srcPtr, uint32 count, const char **error)
-{
-	const uint32 blockEnd = self->length + count;
-	ENSURE_CAPACITY();
-	memcpy(self->data + self->length, srcPtr, count);
-	self->length = blockEnd;
-	return BUF_SUCCESS;
-}
-
 DLLEXPORT(BufferStatus) bufAppendByte(struct Buffer *self, uint8 byte, const char **error) {
 	const uint32 blockEnd = self->length + 1;
 	ENSURE_CAPACITY();
@@ -259,38 +246,33 @@ DLLEXPORT(BufferStatus) bufAppendLongBE(struct Buffer *self, uint32 lword, const
 	return BUF_SUCCESS;
 }
 
-// Append some zeros to the end of the buffer, and return a ptr to the next free byte after the end.
-//
-DLLEXPORT(BufferStatus) bufAppendZeros(
-	struct Buffer *self, uint32 count, uint8 **ptr, const char **error)
-{
-	const uint32 blockEnd = self->length + count;
-	ENSURE_CAPACITY();
-	memset(self->data + self->length, 0x00, count);
-	if ( ptr ) {
-		*ptr = self->data + self->length;
-	}
-	self->length = blockEnd;
-	return BUF_SUCCESS;
-}
-
 // Append a block of a given constant to the end of the buffer, and return a ptr to the next free
 // byte after the end.
 //
 DLLEXPORT(BufferStatus) bufAppendConst(
-	struct Buffer *self, uint32 count, uint8 value, uint8 **ptr, const char **error)
+	struct Buffer *self, uint8 value, uint32 count, const char **error)
 {
 	const uint32 blockEnd = self->length + count;
 	ENSURE_CAPACITY();
 	memset(self->data + self->length, value, count);
-	if ( ptr ) {
-		*ptr = self->data + self->length;
-	}
 	self->length = blockEnd;
 	return BUF_SUCCESS;
 }
 
-// Used by bufCopyBlock() and bufSetBlock() to ensure sufficient capacity for the operation.
+// Write the supplied data to the buffer structure.
+// Returns BUF_SUCCESS or BUF_NO_MEM.
+//
+DLLEXPORT(BufferStatus) bufAppendBlock(
+	struct Buffer *self, const uint8 *srcPtr, uint32 count, const char **error)
+{
+	const uint32 blockEnd = self->length + count;
+	ENSURE_CAPACITY();
+	memcpy(self->data + self->length, srcPtr, count);
+	self->length = blockEnd;
+	return BUF_SUCCESS;
+}
+
+// Used by bufWriteXXX() to ensure sufficient capacity for the operation.
 //
 static BufferStatus maybeReallocate(
 	struct Buffer *const self, const uint32 bufAddress, const uint32 count, const char **error)
@@ -325,32 +307,152 @@ static BufferStatus maybeReallocate(
 	return BUF_SUCCESS;
 }
 
+// Write a single byte into the target buffer. The target offset may be outside the current extent
+// (or even capacity) of the target buffer.
+//
+DLLEXPORT(BufferStatus) bufWriteByte(
+	struct Buffer *self, uint32 offset, uint8 byte, const char **error)
+{
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	status = maybeReallocate(self, offset, 1, error);
+	CHECK_STATUS(status, "bufWriteByte()", status);
+	self->data[offset] = byte;
+cleanup:
+	return returnCode;
+}
+
+// Write a uint16 into the target buffer in little-endian format. The target offset may be outside
+// the current extent (or even capacity) of the target buffer.
+//
+DLLEXPORT(BufferStatus) bufWriteWordLE(
+	struct Buffer *self, uint32 offset, uint16 word, const char **error)
+{
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	union {
+		uint16 word;
+		uint8 byte[2];
+	} u;
+	u.word = word;
+	status = maybeReallocate(self, offset, 2, error);
+	CHECK_STATUS(status, "bufWriteWordLE()", status);
+	#if BYTE_ORDER == 1234
+		*(self->data + offset) = u.byte[0];
+		*(self->data + offset + 1) = u.byte[1];
+	#else
+		*(self->data + offset) = u.byte[1];
+		*(self->data + offset + 1) = u.byte[0];
+	#endif
+cleanup:
+	return returnCode;
+}
+
+// Write a uint16 into the target buffer in big-endian format. The target offset may be outside
+// the current extent (or even capacity) of the target buffer.
+//
+DLLEXPORT(BufferStatus) bufWriteWordBE(
+	struct Buffer *self, uint32 offset, uint16 word, const char **error)
+{
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	union {
+		uint16 word;
+		uint8 byte[2];
+	} u;
+	u.word = word;
+	status = maybeReallocate(self, offset, 2, error);
+	CHECK_STATUS(status, "bufWriteWordBE()", status);
+	#if BYTE_ORDER == 1234
+		*(self->data + offset) = u.byte[1];
+		*(self->data + offset + 1) = u.byte[0];
+	#else
+		*(self->data + offset) = u.byte[0];
+		*(self->data + offset + 1) = u.byte[1];
+	#endif
+cleanup:
+	return returnCode;
+}
+
+// Write a uint16 into the target buffer in little-endian format. The target offset may be outside
+// the current extent (or even capacity) of the target buffer.
+//
+DLLEXPORT(BufferStatus) bufWriteLongLE(
+	struct Buffer *self, uint32 offset, uint32 lword, const char **error)
+{
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	union {
+		uint32 lword;
+		uint8 byte[4];
+	} u;
+	u.lword = lword;
+	status = maybeReallocate(self, offset, 4, error);
+	CHECK_STATUS(status, "bufWriteLongLE()", status);
+	#if BYTE_ORDER == 1234
+		*(self->data + offset) = u.byte[0];
+		*(self->data + offset + 1) = u.byte[1];
+		*(self->data + offset + 2) = u.byte[2];
+		*(self->data + offset + 3) = u.byte[3];
+	#else
+		*(self->data + offset) = u.byte[3];
+		*(self->data + offset + 1) = u.byte[2];
+		*(self->data + offset + 2) = u.byte[1];
+		*(self->data + offset + 3) = u.byte[0];
+	#endif
+cleanup:
+	return returnCode;
+}
+
+// Write a uint16 into the target buffer in little-endian format. The target offset may be outside
+// the current extent (or even capacity) of the target buffer.
+//
+DLLEXPORT(BufferStatus) bufWriteLongBE(
+	struct Buffer *self, uint32 offset, uint32 lword, const char **error)
+{
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	union {
+		uint32 lword;
+		uint8 byte[4];
+	} u;
+	u.lword = lword;
+	status = maybeReallocate(self, offset, 4, error);
+	CHECK_STATUS(status, "bufWriteLongBE()", status);
+	#if BYTE_ORDER == 1234
+		*(self->data + offset) = u.byte[3];
+		*(self->data + offset + 1) = u.byte[2];
+		*(self->data + offset + 2) = u.byte[1];
+		*(self->data + offset + 3) = u.byte[0];
+	#else
+		*(self->data + offset) = u.byte[0];
+		*(self->data + offset + 1) = u.byte[1];
+		*(self->data + offset + 2) = u.byte[2];
+		*(self->data + offset + 3) = u.byte[3];
+	#endif
+cleanup:
+	return returnCode;
+}
+
+// Set a range of bytes of the target buffer to a given value. The target offset may be outside the
+// current extent (or even capacity) of the target buffer.
+//
+DLLEXPORT(BufferStatus) bufWriteConst(
+	struct Buffer *self, uint32 offset, uint8 value, uint32 count, const char **error)
+{
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	status = maybeReallocate(self, offset, count, error);
+	CHECK_STATUS(status, "bufWriteConst()", status);
+	memset(self->data + offset, value, count);
+cleanup:
+	return returnCode;
+}
+
 // Copy a bunch of bytes from a source pointer into the buffer. The target address may be outside
 // the current extent (or even capacity) of the target buffer.
 //
-DLLEXPORT(BufferStatus) bufCopyBlock(
-	struct Buffer *self, uint32 bufAddress, const uint8 *srcPtr, uint32 count, const char **error)
+DLLEXPORT(BufferStatus) bufWriteBlock(
+	struct Buffer *self, uint32 offset, const uint8 *ptr, uint32 count, const char **error)
 {
-	if ( !count ) {
-		return BUF_SUCCESS;
-	} else {
-		maybeReallocate(self, bufAddress, count, error);
-		memcpy(self->data + bufAddress, srcPtr, count);
-		return BUF_SUCCESS;
-	}
-}
-
-// Set a range of bytes of the target buffer to a given value. The target address may be outside
-// the current extent (or even capacity) of the target buffer.
-//
-DLLEXPORT(BufferStatus) bufSetBlock(
-	struct Buffer *self, uint32 bufAddress, uint8 value, uint32 count, const char **error)
-{
-	if ( !count ) {
-		return BUF_SUCCESS;
-	} else {
-		maybeReallocate(self, bufAddress, count, error);
-		memset(self->data + bufAddress, value, count);
-		return BUF_SUCCESS;
-	}
+	BufferStatus status, returnCode = BUF_SUCCESS;
+	status = maybeReallocate(self, offset, count, error);
+	CHECK_STATUS(status, "bufWriteConst()", status);
+	memcpy(self->data + offset, ptr, count);
+cleanup:
+	return returnCode;
 }
