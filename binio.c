@@ -25,7 +25,6 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 	long length;
 	long actualLength;
 	const uint32 currentLength = self->length;
-	uint8 *ptr;
 	FILE *file = fopen(fileName, "rb");
 	if ( !file ) {
 		errRenderStd(error);
