@@ -283,7 +283,7 @@ void testDeriveWriteMap(const char *inputData, const char *expectedWriteMap) {
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	status = bufInitialise(&mask, 1024, 0x00, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
-	status = bufWriteBlock(&data, 0x00000000, (const uint8 *)inputData, strlen(inputData), NULL);
+	status = bufWriteBlock(&data, 0x00000000, (const uint8 *)inputData, (uint32)strlen(inputData), NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	status = bufDeriveMask(&data, &mask, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);

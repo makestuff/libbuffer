@@ -61,7 +61,8 @@ extern "C" {
 		BUF_SUCCESS = 0,      ///< The operation completed successfully.
 		BUF_NO_MEM,           ///< There was a memory allocation failure.
 		BUF_FOPEN,            ///< There was a file open error.
-		BUF_FSEEK,            ///< There was a binary file seek error.
+		BUF_FSEEK,            ///< There was a binary file fseek() error.
+		BUF_FTELL,            ///< There was a binary file ftell() error.
 		BUF_FEOF,             ///< There was an error testing for the end of a binary file.
 		BUF_FERROR,           ///< Fewer bytes were read or written than expected.
 		HEX_EMPTY_FILE,       ///< The I8HEX file was empty.

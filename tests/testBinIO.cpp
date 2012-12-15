@@ -47,7 +47,7 @@ TEST(BinIO_testReadExistingFile) {
 	status = bufAppendFromBinaryFile(&buf, FILENAME, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(2 * strlen(DATA), buf.length);
-	CHECK_ARRAY_EQUAL(DATA, buf.data + strlen(DATA), strlen(DATA));
+	CHECK_ARRAY_EQUAL(DATA, buf.data + strlen(DATA), (int)strlen(DATA));
 	bufDestroy(&buf);
 }
 
@@ -60,7 +60,7 @@ TEST(BinIO_testWriteFile) {
 	Buffer buf;
 	BufferStatus status = bufInitialise(&buf, 8, 0, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
-	status = bufAppendBlock(&buf, (const uint8 *)DATA, strlen(DATA), NULL);
+	status = bufAppendBlock(&buf, (const uint8 *)DATA, (uint32)strlen(DATA), NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 
 	status = bufWriteBinaryFile(&buf, FILENAME, 0, buf.length, NULL);
