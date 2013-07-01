@@ -55,7 +55,8 @@ TEST(BinIO_testWriteFile) {
 	const char *const FILENAME = "tmpFile.bin";
 	const char *const DATA = "Just some test data";
 	ifstream file;
-	ifstream::pos_type length;
+	streamoff length;
+	//ifstream::pos_type length;
 	char *fileData;
 	Buffer buf;
 	BufferStatus status = bufInitialise(&buf, 8, 0, NULL);
@@ -71,7 +72,7 @@ TEST(BinIO_testWriteFile) {
 	CHECK_EQUAL(strlen(DATA), (size_t)length);
 	fileData = new char[(unsigned int)length];
 	file.seekg(0, ios::beg);
-	file.read(fileData, length);
+	file.read(fileData, (streamsize)length);
 	file.close();
 	CHECK_ARRAY_EQUAL(DATA, fileData, (int)length);
 
@@ -82,7 +83,7 @@ TEST(BinIO_testWriteFile) {
 	length = file.tellg();
 	CHECK_EQUAL(9, length);
 	file.seekg(0, ios::beg);
-	file.read(fileData, length);
+	file.read(fileData, (streamsize)length);
 	file.close();
 	CHECK_ARRAY_EQUAL(DATA+5, fileData, (int)length);
 

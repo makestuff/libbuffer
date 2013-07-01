@@ -211,14 +211,14 @@ void testRoundTrip(const char *firstLine, ...) {
 	CHECK_EQUAL(BUF_SUCCESS, status);
 
 	ifstream file;
-	ifstream::pos_type length;
+	streamoff length;
 	file.open(FILENAME, ios::in|ios::ate);
 	CHECK(file.is_open());
 	length = file.tellg();
 	CHECK_EQUAL(expected.size(), (unsigned int)length);
 	char *fileData = new char[(unsigned int)length];
 	file.seekg(0, ios::beg);
-	file.read(fileData, length);
+	file.read(fileData, (streamsize)length);
 	file.close();
 	CHECK_ARRAY_EQUAL(expected.c_str(), (const char *)fileData, (int)length);
 
