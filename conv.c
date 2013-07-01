@@ -21,13 +21,13 @@
 //
 bool getHexNibble(char hexDigit, uint8 *outputNibble) {
 	if ( hexDigit >= '0' && hexDigit <= '9' ) {
-		*outputNibble = hexDigit - '0';
+		*outputNibble = (uint8)(hexDigit - '0');
 		return false;
 	} else if ( hexDigit >= 'a' && hexDigit <= 'f' ) {
-		*outputNibble = hexDigit - 'a' + 10;
+		*outputNibble = (uint8)(hexDigit - 'a' + 10);
 		return false;
 	} else if ( hexDigit >= 'A' && hexDigit <= 'F' ) {
-		*outputNibble = hexDigit - 'A' + 10;
+		*outputNibble = (uint8)(hexDigit - 'A' + 10);
 		return false;
 	} else {
 		return true;
@@ -41,7 +41,7 @@ bool getHexByte(const char *hexDigitPair, uint8 *outputByte) {
 	uint8 upperNibble;
 	uint8 lowerNibble;
 	if ( !getHexNibble(hexDigitPair[0], &upperNibble) && !getHexNibble(hexDigitPair[1], &lowerNibble) ) {
-		*outputByte = (upperNibble << 4) | lowerNibble;
+		*outputByte = (uint8)((upperNibble << 4) | lowerNibble);
 		return false;
 	} else {
 		return true;
@@ -51,15 +51,11 @@ bool getHexByte(const char *hexDigitPair, uint8 *outputByte) {
 // Return the ascii hex digit representing the most significant nibble of the supplied byte.
 //
 char getHexUpperNibble(uint8 byte) {
-	uint8 tmp = byte >> 4;
-	tmp += (tmp < 10) ? '0' : 'A' - 10;
-	return tmp;
+	return "0123456789ABCDEF"[byte >> 4];
 }
 
 // Return the ascii hex digit representing the least significant nibble of the supplied byte.
 //
 char getHexLowerNibble(uint8 byte) {
-	uint8 tmp = byte & 0x0F;
-	tmp += (tmp < 10) ? '0' : 'A' - 10;
-	return tmp;
+	return "0123456789ABCDEF"[byte & 0x0F];
 }

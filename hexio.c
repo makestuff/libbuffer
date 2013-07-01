@@ -83,8 +83,8 @@ BufferStatus bufProcessLine(
 		return HEX_JUNK_ADDR_MSB;
 	}
 	p += 2;
-	address = thisByte << 8;
-	calculatedChecksum += thisByte;
+	address = (uint16)(thisByte << 8);
+	calculatedChecksum = (uint8)(calculatedChecksum + thisByte);
 	
 	// Read the LSB of the address
 	//
@@ -93,8 +93,8 @@ BufferStatus bufProcessLine(
 		return HEX_JUNK_ADDR_LSB;
 	}
 	p += 2;
-	address |= thisByte;
-	calculatedChecksum += thisByte;
+	address = (uint16)(address | thisByte);
+	calculatedChecksum = (uint8)(calculatedChecksum + thisByte);
 	
 	// Read the record type
 	//
@@ -103,7 +103,7 @@ BufferStatus bufProcessLine(
 		return HEX_JUNK_REC_TYPE;
 	}
 	p += 2;
-	calculatedChecksum += *recordType;
+	calculatedChecksum = (uint8)(calculatedChecksum + *recordType);
 	
 	// Read the data
 	//
@@ -114,7 +114,7 @@ BufferStatus bufProcessLine(
 		}
 		p += 2;
 		dataBytes[i] = thisByte;
-		calculatedChecksum += thisByte;
+		calculatedChecksum = (uint8)(calculatedChecksum + thisByte);
 	}
 	
 	// Read the checksum
@@ -144,7 +144,7 @@ BufferStatus bufProcessLine(
 	while ( *p && *p != 0x0D && *p != 0x0A ) {
 		p++;
 	}
-	if ( strncmp(sourceLine, reconstructedLine, p - sourceLine) ) {
+	if ( strncmp(sourceLine, reconstructedLine, (size_t)(p - sourceLine)) ) {
 		errRender(
 			error, "Some corruption detected at line %lu - some junk at the end of the line perhaps?",
 			lineNumber);
@@ -174,7 +174,7 @@ BufferStatus bufProcessLine(
 				lineNumber);
 			return HEX_BAD_EXT_SEG;
 		}
-		*segment = ((dataBytes[0] << 8) + dataBytes[1]) << 4;
+		*segment = (uint32)(((dataBytes[0] << 8) + dataBytes[1]) << 4);
 		return BUF_SUCCESS;
 	} else if ( *recordType == START_SEG_RECORD ) {
 		errRender(error, "Record type START_SEG_RECORD not supported at line %lu", lineNumber);
@@ -260,10 +260,10 @@ static void writeHexByte(uint8 byte, FILE *file) {
 // Write the supplied word as four hex digits, in big-endian format (most significant byte first).
 //
 static void writeHexWordBE(uint16 word, FILE *file) {
-	fputc(getHexUpperNibble(word >> 8), file);
-	fputc(getHexLowerNibble(word >> 8), file);
-	fputc(getHexUpperNibble(word & 0xFF), file);
-	fputc(getHexLowerNibble(word & 0xFF), file);
+	fputc(getHexUpperNibble((uint8)(word >> 8)), file);
+	fputc(getHexLowerNibble((uint8)(word >> 8)), file);
+	fputc(getHexUpperNibble((uint8)(word & 0xFF)), file);
+	fputc(getHexLowerNibble((uint8)(word & 0xFF)), file);
 }
 
 BufferStatus bufDeriveMask(
@@ -378,11 +378,11 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 			writeHexWordBE(address & 0xFFFF, file);
 			writeHexByte(DATA_RECORD, file);
 			calculatedChecksum = bytesToWrite;
-			calculatedChecksum += (uint8)(address >> 8);
-			calculatedChecksum += address & 0xFF;
+			calculatedChecksum = (uint8)(calculatedChecksum + (address >> 8));
+			calculatedChecksum = (uint8)(calculatedChecksum + (address & 0xFF));
 			for ( i = 0; i < bytesToWrite; i++ ) {
 				writeHexByte(sourceData->data[address + i], file);
-				calculatedChecksum += sourceData->data[address + i];
+				calculatedChecksum = (uint8)(calculatedChecksum + sourceData->data[address + i]);
 			}
 			calculatedChecksum = (uint8)(256 - calculatedChecksum);
 			writeHexByte(calculatedChecksum, file);
@@ -397,7 +397,7 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 				goto cleanupBuffer;
 			}
 			calculatedChecksum =
-				(uint8)(256 - 2 - EXT_SEG_RECORD - (uint8)(segment >> 8) - (segment & 0xFF));
+				(uint8)(256 - 2 - EXT_SEG_RECORD - (segment >> 8) - (segment & 0xFF));
 			fwrite(":020000", 1, 7, file);
 			writeHexByte(EXT_SEG_RECORD, file);
 			writeHexWordBE((uint16)segment, file);

@@ -21,7 +21,7 @@
 DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 	struct Buffer *self, const char *fileName, const char **error)
 {
-	BufferStatus returnCode = BUF_SUCCESS;
+	BufferStatus retVal = BUF_SUCCESS;
 	BufferStatus bStatus;
 	uint32 length;
 	uint32 actualLength;
@@ -31,63 +31,62 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 	if ( !file ) {
 		errRenderStd(error);
 		errPrefix(error, "bufAppendFromBinaryFile()");
-		FAIL(BUF_FOPEN);
+		FAIL(BUF_FOPEN, cleanup);
 	}
 	if ( fseek(file, 0, SEEK_END) ) {
 		errRenderStd(error);
 		errPrefix(error, "bufAppendFromBinaryFile()");
-		FAIL(BUF_FSEEK);
+		FAIL(BUF_FSEEK, cleanup);
 	}
 	ftellResult = ftell(file);
 	if ( ftellResult < 0 ) {
 		errRenderStd(error);
 		errPrefix(error, "bufAppendFromBinaryFile()");
-		FAIL(BUF_FTELL);
+		FAIL(BUF_FTELL, cleanup);
 	}
-	length = (size_t)ftellResult;
+	length = (uint32)ftellResult;
 	bStatus = bufAppendConst(self, 0x00, length, error);
-	CHECK_STATUS(bStatus, "bufAppendFromBinaryFile()", bStatus);
+	CHECK_STATUS(bStatus, bStatus, cleanup, "bufAppendFromBinaryFile()");
 	rewind(file);
 	actualLength = (uint32)fread(self->data + currentLength, 1, length, file);
 	if ( actualLength != length ) {
-		fclose(file);
-		if ( feof(file) ) {
-			errRender(error, "bufAppendFromBinaryFile(): Unexpectedly hit EOF after reading %lu bytes!\n", actualLength);
-			FAIL(BUF_FEOF);
-		} else if ( ferror(file) ) {
+		CHECK_STATUS(
+			feof(file), BUF_FEOF, cleanup,
+			"bufAppendFromBinaryFile(): Unexpectedly hit EOF after reading %lu bytes!", actualLength);
+		if ( ferror(file) ) {
 			errRenderStd(error);
 			errPrefix(error, "bufAppendFromBinaryFile()");
-			FAIL(BUF_FERROR);
+			FAIL(BUF_FERROR, cleanup);
 		}
 	}
 cleanup:
 	if ( file ) {
 		fclose(file);
 	}
-	return returnCode;
+	return retVal;
 }
 
 DLLEXPORT(BufferStatus) bufWriteBinaryFile(
 	const struct Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
 	const char **error)
 {
-	BufferStatus returnCode = BUF_SUCCESS;
+	BufferStatus retVal = BUF_SUCCESS;
 	uint32 actualLength;
 	FILE *file = fopen(fileName, "wb");
 	if ( !file ) {
 		errRenderStd(error);
 		errPrefix(error, "bufWriteBinaryFile()");
-		FAIL(BUF_FOPEN);
+		FAIL(BUF_FOPEN, cleanup);
 	}
 	actualLength = (uint32)fwrite(self->data + bufAddress, 1, count, file);
 	if ( actualLength != count ) {
 		errRenderStd(error);
 		errPrefix(error, "bufWriteBinaryFile()");
-		FAIL(BUF_FERROR);
+		FAIL(BUF_FERROR, cleanup);
 	}
 cleanup:
 	if ( file ) {
 		fclose(file);	
 	}
-	return returnCode;
+	return retVal;
 }

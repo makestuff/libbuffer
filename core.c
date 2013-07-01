@@ -26,14 +26,14 @@
 DLLEXPORT(BufferStatus) bufInitialise(
 	struct Buffer *self, uint32 initialSize, uint8 fill, const char **error)
 {
+	BufferStatus retVal = BUF_SUCCESS;
 	uint8 *ptr;
 	const uint8 *endPtr;
 	self->fill = fill;
 	self->data = (uint8 *)malloc(initialSize);
-	if ( !self->data ) {
-		errRender(error, "Cannot allocate memory for buffer");
-		return BUF_NO_MEM;
-	}
+	CHECK_STATUS(
+		!self->data, BUF_NO_MEM, cleanup,
+		"bufInitialise(): Cannot allocate memory for buffer");
 	ptr = self->data;
 	endPtr = ptr + initialSize;
 	while ( ptr < endPtr ) {
@@ -41,7 +41,8 @@ DLLEXPORT(BufferStatus) bufInitialise(
 	}
 	self->capacity = initialSize;
 	self->length = 0;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // Free up any memory associated with the buffer structure.
@@ -60,6 +61,7 @@ DLLEXPORT(void) bufDestroy(struct Buffer *self) {
 DLLEXPORT(BufferStatus) bufDeepCopy(
 	struct Buffer *dst, const struct Buffer *src, const char **error)
 {
+	BufferStatus retVal = BUF_SUCCESS;
 	uint8 *ptr;
 	const uint8 *endPtr;
 	if ( dst->data && dst->capacity < src->capacity ) {
@@ -70,10 +72,9 @@ DLLEXPORT(BufferStatus) bufDeepCopy(
 		// The dst needs to be allocated.
 		dst->capacity = src->capacity;
 		dst->data = (uint8 *)malloc(dst->capacity);
-		if ( !dst->data ) {
-			errRender(error, "Cannot allocate memory for buffer");
-			return BUF_NO_MEM;
-		}
+		CHECK_STATUS(
+			!dst->data, BUF_NO_MEM, cleanup,
+			"bufDeepCopy(): Cannot allocate memory for buffer");
 	}
 	dst->length = src->length;
 	dst->fill = src->fill;
@@ -83,9 +84,12 @@ DLLEXPORT(BufferStatus) bufDeepCopy(
 	while ( ptr < endPtr ) {
 		*ptr++ = dst->fill;
 	}
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
+// Swap the actual byte[] owned by each Buffer
+//
 DLLEXPORT(void) bufSwap(
 	struct Buffer *x, struct Buffer *y)
 {
@@ -120,18 +124,15 @@ DLLEXPORT(void) bufZeroLength(struct Buffer *self) {
 static BufferStatus reallocate(
 	struct Buffer *self, uint32 newCapacity, uint32 blockEnd, const char **error)
 {
-	// The data will not fit in the buffer - we need to make the buffer bigger
-	//
+	BufferStatus retVal = BUF_SUCCESS;
 	uint8 *ptr;
 	const uint8 *endPtr;
 	do {
 		newCapacity *= 2;
 	} while ( blockEnd > newCapacity );
-	self->data = (uint8 *)realloc(self->data, newCapacity);
-	if ( !self->data ) {
-		errRender(error, "Cannot reallocate memory for buffer");
-		return BUF_NO_MEM;
-	}
+	ptr = (uint8 *)realloc(self->data, newCapacity);
+	CHECK_STATUS(!ptr, BUF_NO_MEM, cleanup, "Cannot reallocate memory for buffer");
+	self->data = ptr;
 	self->capacity = newCapacity;
 	
 	// Now zero from the end of the block to the end of the new capacity
@@ -141,35 +142,37 @@ static BufferStatus reallocate(
 	while ( ptr < endPtr ) {
 		*ptr++ = self->fill;
 	}
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // If the data will not fit in the buffer, make the buffer bigger
 //
-#define ENSURE_CAPACITY() \
+#define ENSURE_CAPACITY(prefix) \
 	if ( blockEnd > self->capacity ) { \
 		BufferStatus status = reallocate(self, self->capacity, blockEnd, error); \
-		if ( status != BUF_SUCCESS ) { \
-			return status; \
-		} \
+		CHECK_STATUS(status, status, cleanup, prefix); \
 	}
 
 DLLEXPORT(BufferStatus) bufAppendByte(struct Buffer *self, uint8 byte, const char **error) {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + 1;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendByte()");
 	*(self->data + self->length) = byte;
 	self->length++;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 DLLEXPORT(BufferStatus) bufAppendWordLE(struct Buffer *self, uint16 word, const char **error) {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + 2;
 	union {
 		uint16 word;
 		uint8 byte[2];
 	} u;
 	u.word = word;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendWordLE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + self->length) = u.byte[0];
 		*(self->data + self->length + 1) = u.byte[1];
@@ -178,17 +181,19 @@ DLLEXPORT(BufferStatus) bufAppendWordLE(struct Buffer *self, uint16 word, const 
 		*(self->data + self->length + 1) = u.byte[0];
 	#endif
 	self->length += 2;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 DLLEXPORT(BufferStatus) bufAppendWordBE(struct Buffer *self, uint16 word, const char **error) {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + 2;
 	union {
 		uint16 word;
 		uint8 byte[2];
 	} u;
 	u.word = word;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendWordBE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + self->length) = u.byte[1];
 		*(self->data + self->length + 1) = u.byte[0];
@@ -197,17 +202,19 @@ DLLEXPORT(BufferStatus) bufAppendWordBE(struct Buffer *self, uint16 word, const 
 		*(self->data + self->length + 1) = u.byte[1];
 	#endif
 	self->length += 2;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 DLLEXPORT(BufferStatus) bufAppendLongLE(struct Buffer *self, uint32 lword, const char **error) {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + 4;
 	union {
 		uint32 lword;
 		uint8 byte[4];
 	} u;
 	u.lword = lword;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendLongLE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + self->length) = u.byte[0];
 		*(self->data + self->length + 1) = u.byte[1];
@@ -220,17 +227,19 @@ DLLEXPORT(BufferStatus) bufAppendLongLE(struct Buffer *self, uint32 lword, const
 		*(self->data + self->length + 3) = u.byte[0];
 	#endif
 	self->length += 4;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 DLLEXPORT(BufferStatus) bufAppendLongBE(struct Buffer *self, uint32 lword, const char **error) {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + 4;
 	union {
 		uint32 lword;
 		uint8 byte[4];
 	} u;
 	u.lword = lword;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendLongBE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + self->length) = u.byte[3];
 		*(self->data + self->length + 1) = u.byte[2];
@@ -243,7 +252,8 @@ DLLEXPORT(BufferStatus) bufAppendLongBE(struct Buffer *self, uint32 lword, const
 		*(self->data + self->length + 3) = u.byte[3];
 	#endif
 	self->length += 4;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // Append a block of a given constant to the end of the buffer, and return a ptr to the next free
@@ -252,11 +262,13 @@ DLLEXPORT(BufferStatus) bufAppendLongBE(struct Buffer *self, uint32 lword, const
 DLLEXPORT(BufferStatus) bufAppendConst(
 	struct Buffer *self, uint8 value, uint32 count, const char **error)
 {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + count;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendConst()");
 	memset(self->data + self->length, value, count);
 	self->length = blockEnd;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // Write the supplied data to the buffer structure.
@@ -265,11 +277,13 @@ DLLEXPORT(BufferStatus) bufAppendConst(
 DLLEXPORT(BufferStatus) bufAppendBlock(
 	struct Buffer *self, const uint8 *srcPtr, uint32 count, const char **error)
 {
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = self->length + count;
-	ENSURE_CAPACITY();
+	ENSURE_CAPACITY("bufAppendBlock()");
 	memcpy(self->data + self->length, srcPtr, count);
 	self->length = blockEnd;
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // Used by bufWriteXXX() to ensure sufficient capacity for the operation.
@@ -282,12 +296,13 @@ static BufferStatus maybeReallocate(
 	//   * The block to be written starts within the current buffer, but ends beyond it
 	//   * The block to be written ends within the current buffer
 	//
+	BufferStatus retVal = BUF_SUCCESS;
 	const uint32 blockEnd = bufAddress + count;
 	if ( bufAddress >= self->length ) {
 		// Begins outside - reallocation may be necessary, zeroing definitely necessary
 		//
 		uint8 *ptr, *endPtr;
-		ENSURE_CAPACITY();
+		ENSURE_CAPACITY("maybeReallocate()");
 		
 		// Now fill from the end of the old length to the start of the block
 		//
@@ -301,10 +316,11 @@ static BufferStatus maybeReallocate(
 	} else if ( bufAddress < self->length && blockEnd > self->length ) {
 		// Begins inside, ends outside - reallocation and zeroing may be necessary
 		//
-		ENSURE_CAPACITY();
+		ENSURE_CAPACITY("maybeReallocate()");
 		self->length = blockEnd;
 	}
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // Write a single byte into the target buffer. The target offset may be outside the current extent
@@ -313,12 +329,11 @@ static BufferStatus maybeReallocate(
 DLLEXPORT(BufferStatus) bufWriteByte(
 	struct Buffer *self, uint32 offset, uint8 byte, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
-	status = maybeReallocate(self, offset, 1, error);
-	CHECK_STATUS(status, "bufWriteByte()", status);
+	BufferStatus retVal = maybeReallocate(self, offset, 1, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteByte()");
 	self->data[offset] = byte;
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Write a uint16 into the target buffer in little-endian format. The target offset may be outside
@@ -327,14 +342,14 @@ cleanup:
 DLLEXPORT(BufferStatus) bufWriteWordLE(
 	struct Buffer *self, uint32 offset, uint16 word, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
+	BufferStatus retVal;
 	union {
 		uint16 word;
 		uint8 byte[2];
 	} u;
 	u.word = word;
-	status = maybeReallocate(self, offset, 2, error);
-	CHECK_STATUS(status, "bufWriteWordLE()", status);
+	retVal = maybeReallocate(self, offset, 2, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteWordLE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + offset) = u.byte[0];
 		*(self->data + offset + 1) = u.byte[1];
@@ -343,7 +358,7 @@ DLLEXPORT(BufferStatus) bufWriteWordLE(
 		*(self->data + offset + 1) = u.byte[0];
 	#endif
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Write a uint16 into the target buffer in big-endian format. The target offset may be outside
@@ -352,14 +367,14 @@ cleanup:
 DLLEXPORT(BufferStatus) bufWriteWordBE(
 	struct Buffer *self, uint32 offset, uint16 word, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
+	BufferStatus retVal;
 	union {
 		uint16 word;
 		uint8 byte[2];
 	} u;
 	u.word = word;
-	status = maybeReallocate(self, offset, 2, error);
-	CHECK_STATUS(status, "bufWriteWordBE()", status);
+	retVal = maybeReallocate(self, offset, 2, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteWordBE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + offset) = u.byte[1];
 		*(self->data + offset + 1) = u.byte[0];
@@ -368,7 +383,7 @@ DLLEXPORT(BufferStatus) bufWriteWordBE(
 		*(self->data + offset + 1) = u.byte[1];
 	#endif
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Write a uint16 into the target buffer in little-endian format. The target offset may be outside
@@ -377,14 +392,14 @@ cleanup:
 DLLEXPORT(BufferStatus) bufWriteLongLE(
 	struct Buffer *self, uint32 offset, uint32 lword, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
+	BufferStatus retVal;
 	union {
 		uint32 lword;
 		uint8 byte[4];
 	} u;
 	u.lword = lword;
-	status = maybeReallocate(self, offset, 4, error);
-	CHECK_STATUS(status, "bufWriteLongLE()", status);
+	retVal = maybeReallocate(self, offset, 4, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteLongLE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + offset) = u.byte[0];
 		*(self->data + offset + 1) = u.byte[1];
@@ -397,7 +412,7 @@ DLLEXPORT(BufferStatus) bufWriteLongLE(
 		*(self->data + offset + 3) = u.byte[0];
 	#endif
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Write a uint16 into the target buffer in little-endian format. The target offset may be outside
@@ -406,14 +421,14 @@ cleanup:
 DLLEXPORT(BufferStatus) bufWriteLongBE(
 	struct Buffer *self, uint32 offset, uint32 lword, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
+	BufferStatus retVal;
 	union {
 		uint32 lword;
 		uint8 byte[4];
 	} u;
 	u.lword = lword;
-	status = maybeReallocate(self, offset, 4, error);
-	CHECK_STATUS(status, "bufWriteLongBE()", status);
+	retVal = maybeReallocate(self, offset, 4, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteLongBE()");
 	#if BYTE_ORDER == 1234
 		*(self->data + offset) = u.byte[3];
 		*(self->data + offset + 1) = u.byte[2];
@@ -426,7 +441,7 @@ DLLEXPORT(BufferStatus) bufWriteLongBE(
 		*(self->data + offset + 3) = u.byte[3];
 	#endif
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Set a range of bytes of the target buffer to a given value. The target offset may be outside the
@@ -435,12 +450,11 @@ cleanup:
 DLLEXPORT(BufferStatus) bufWriteConst(
 	struct Buffer *self, uint32 offset, uint8 value, uint32 count, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
-	status = maybeReallocate(self, offset, count, error);
-	CHECK_STATUS(status, "bufWriteConst()", status);
+	BufferStatus retVal = maybeReallocate(self, offset, count, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteConst()");
 	memset(self->data + offset, value, count);
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Copy a bunch of bytes from a source pointer into the buffer. The target address may be outside
@@ -449,10 +463,9 @@ cleanup:
 DLLEXPORT(BufferStatus) bufWriteBlock(
 	struct Buffer *self, uint32 offset, const uint8 *ptr, uint32 count, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
-	status = maybeReallocate(self, offset, count, error);
-	CHECK_STATUS(status, "bufWriteConst()", status);
+	BufferStatus retVal = maybeReallocate(self, offset, count, error);
+	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteConst()");
 	memcpy(self->data + offset, ptr, count);
 cleanup:
-	return returnCode;
+	return retVal;
 }
