@@ -283,12 +283,12 @@ void testDeriveWriteMap(const char *inputData, const char *expectedWriteMap) {
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	status = bufInitialise(&mask, 1024, 0x00, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
-	status = bufWriteBlock(&data, 0x00000000, (const uint8 *)inputData, (uint32)strlen(inputData), NULL);
+	status = bufWriteBlock(&data, 0x00000000, (const uint8 *)inputData, strlen(inputData), NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	status = bufDeriveMask(&data, &mask, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(data.length, mask.length);
-	for ( uint32 i = 0; i < mask.length; i++ ) {
+	for ( size_t i = 0; i < mask.length; i++ ) {
 		if ( mask.data[i] ) {
 			mask.data[i] = '*';
 		} else {

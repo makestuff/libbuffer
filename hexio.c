@@ -270,7 +270,7 @@ BufferStatus bufDeriveMask(
 	const struct Buffer *sourceData, struct Buffer *destMask, const char **error)
 {
 	BufferStatus retVal = BUF_SUCCESS;
-	uint32 address, count, i;
+	size_t address, count, i;
 	BufferStatus bStatus;
 	bufZeroLength(destMask);
 	bStatus = bufAppendConst(destMask, 0x01, sourceData->length, error);
@@ -312,8 +312,8 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 	BufferStatus status, retVal = BUF_SUCCESS;
 	struct Buffer tmpSourceMask;
 	bool usedTmpSourceMask = false;
-	uint32 address = 0x00000000;
-	uint32 ceiling = 0x00000000;
+	size_t address = 0x00000000;
+	size_t ceiling = 0x00000000;
 	uint32 segment;
 	uint8 i, calculatedChecksum, maxBytesToWrite, bytesToWrite;
 	FILE *file = fopen(fileName, "wb");
@@ -382,7 +382,7 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 			address += bytesToWrite;
 		}
 		if ( address < sourceMask->length ) {
-			segment = address >> 4;
+			segment = (uint32)(address >> 4);
 			CHECK_STATUS(
 				segment > 0xFFFF, HEX_BAD_EXT_SEG, cleanupBuffer,
 				"bufWriteToIntelHexFile(): Segment addresses > 0xFFFF are not supported"

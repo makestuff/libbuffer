@@ -24,7 +24,7 @@
 // Returns BUF_SUCCESS or BUF_NO_MEM.
 //
 DLLEXPORT(BufferStatus) bufInitialise(
-	struct Buffer *self, uint32 initialSize, uint8 fill, const char **error)
+	struct Buffer *self, size_t initialSize, uint8 fill, const char **error)
 {
 	BufferStatus retVal = BUF_SUCCESS;
 	uint8 *ptr;
@@ -94,8 +94,8 @@ DLLEXPORT(void) bufSwap(
 	struct Buffer *x, struct Buffer *y)
 {
 	uint8 *const tmpData = x->data;
-	const uint32 tmpLength = x->length;
-	const uint32 tmpCapacity = x->capacity;
+	const size_t tmpLength = x->length;
+	const size_t tmpCapacity = x->capacity;
 	const uint8 tmpFill = x->fill;
 
 	x->data = y->data;
@@ -112,7 +112,7 @@ DLLEXPORT(void) bufSwap(
 // Clean the buffer structure so it can be reused.
 //
 DLLEXPORT(void) bufZeroLength(struct Buffer *self) {
-	uint32 i;
+	size_t i;
 	self->length = 0;
 	for ( i = 0; i < self->capacity; i++ ) {
 		self->data[i] = self->fill;
@@ -122,7 +122,7 @@ DLLEXPORT(void) bufZeroLength(struct Buffer *self) {
 // Reallocate the memory for the buffer by doubling the capacity and zeroing the extra storage.
 //
 static BufferStatus reallocate(
-	struct Buffer *self, uint32 newCapacity, uint32 blockEnd, const char **error)
+	struct Buffer *self, size_t newCapacity, size_t blockEnd, const char **error)
 {
 	BufferStatus retVal = BUF_SUCCESS;
 	uint8 *ptr;
@@ -156,7 +156,7 @@ cleanup:
 
 DLLEXPORT(BufferStatus) bufAppendByte(struct Buffer *self, uint8 byte, const char **error) {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + 1;
+	const size_t blockEnd = self->length + 1;
 	ENSURE_CAPACITY("bufAppendByte()");
 	*(self->data + self->length) = byte;
 	self->length++;
@@ -166,7 +166,7 @@ cleanup:
 
 DLLEXPORT(BufferStatus) bufAppendWordLE(struct Buffer *self, uint16 word, const char **error) {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + 2;
+	const size_t blockEnd = self->length + 2;
 	union {
 		uint16 word;
 		uint8 byte[2];
@@ -187,7 +187,7 @@ cleanup:
 
 DLLEXPORT(BufferStatus) bufAppendWordBE(struct Buffer *self, uint16 word, const char **error) {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + 2;
+	const size_t blockEnd = self->length + 2;
 	union {
 		uint16 word;
 		uint8 byte[2];
@@ -208,7 +208,7 @@ cleanup:
 
 DLLEXPORT(BufferStatus) bufAppendLongLE(struct Buffer *self, uint32 lword, const char **error) {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + 4;
+	const size_t blockEnd = self->length + 4;
 	union {
 		uint32 lword;
 		uint8 byte[4];
@@ -233,7 +233,7 @@ cleanup:
 
 DLLEXPORT(BufferStatus) bufAppendLongBE(struct Buffer *self, uint32 lword, const char **error) {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + 4;
+	const size_t blockEnd = self->length + 4;
 	union {
 		uint32 lword;
 		uint8 byte[4];
@@ -260,10 +260,10 @@ cleanup:
 // byte after the end.
 //
 DLLEXPORT(BufferStatus) bufAppendConst(
-	struct Buffer *self, uint8 value, uint32 count, const char **error)
+	struct Buffer *self, uint8 value, size_t count, const char **error)
 {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + count;
+	const size_t blockEnd = self->length + count;
 	ENSURE_CAPACITY("bufAppendConst()");
 	memset(self->data + self->length, value, count);
 	self->length = blockEnd;
@@ -275,10 +275,10 @@ cleanup:
 // Returns BUF_SUCCESS or BUF_NO_MEM.
 //
 DLLEXPORT(BufferStatus) bufAppendBlock(
-	struct Buffer *self, const uint8 *srcPtr, uint32 count, const char **error)
+	struct Buffer *self, const uint8 *srcPtr, size_t count, const char **error)
 {
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = self->length + count;
+	const size_t blockEnd = self->length + count;
 	ENSURE_CAPACITY("bufAppendBlock()");
 	memcpy(self->data + self->length, srcPtr, count);
 	self->length = blockEnd;
@@ -289,7 +289,7 @@ cleanup:
 // Used by bufWriteXXX() to ensure sufficient capacity for the operation.
 //
 static BufferStatus maybeReallocate(
-	struct Buffer *const self, const uint32 bufAddress, const uint32 count, const char **error)
+	struct Buffer *const self, const size_t bufAddress, const size_t count, const char **error)
 {
 	// There are three possibilities:
 	//   * The block to be written starts after the end of the current buffer
@@ -297,7 +297,7 @@ static BufferStatus maybeReallocate(
 	//   * The block to be written ends within the current buffer
 	//
 	BufferStatus retVal = BUF_SUCCESS;
-	const uint32 blockEnd = bufAddress + count;
+	const size_t blockEnd = bufAddress + count;
 	if ( bufAddress >= self->length ) {
 		// Begins outside - reallocation may be necessary, zeroing definitely necessary
 		//
@@ -327,7 +327,7 @@ cleanup:
 // (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteByte(
-	struct Buffer *self, uint32 offset, uint8 byte, const char **error)
+	struct Buffer *self, size_t offset, uint8 byte, const char **error)
 {
 	BufferStatus retVal = maybeReallocate(self, offset, 1, error);
 	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteByte()");
@@ -340,7 +340,7 @@ cleanup:
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteWordLE(
-	struct Buffer *self, uint32 offset, uint16 word, const char **error)
+	struct Buffer *self, size_t offset, uint16 word, const char **error)
 {
 	BufferStatus retVal;
 	union {
@@ -365,7 +365,7 @@ cleanup:
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteWordBE(
-	struct Buffer *self, uint32 offset, uint16 word, const char **error)
+	struct Buffer *self, size_t offset, uint16 word, const char **error)
 {
 	BufferStatus retVal;
 	union {
@@ -390,7 +390,7 @@ cleanup:
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteLongLE(
-	struct Buffer *self, uint32 offset, uint32 lword, const char **error)
+	struct Buffer *self, size_t offset, uint32 lword, const char **error)
 {
 	BufferStatus retVal;
 	union {
@@ -419,7 +419,7 @@ cleanup:
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteLongBE(
-	struct Buffer *self, uint32 offset, uint32 lword, const char **error)
+	struct Buffer *self, size_t offset, uint32 lword, const char **error)
 {
 	BufferStatus retVal;
 	union {
@@ -448,7 +448,7 @@ cleanup:
 // current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteConst(
-	struct Buffer *self, uint32 offset, uint8 value, uint32 count, const char **error)
+	struct Buffer *self, size_t offset, uint8 value, size_t count, const char **error)
 {
 	BufferStatus retVal = maybeReallocate(self, offset, count, error);
 	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteConst()");
@@ -461,7 +461,7 @@ cleanup:
 // the current extent (or even capacity) of the target buffer.
 //
 DLLEXPORT(BufferStatus) bufWriteBlock(
-	struct Buffer *self, uint32 offset, const uint8 *ptr, uint32 count, const char **error)
+	struct Buffer *self, size_t offset, const uint8 *ptr, size_t count, const char **error)
 {
 	BufferStatus retVal = maybeReallocate(self, offset, count, error);
 	CHECK_STATUS(retVal, retVal, cleanup, "bufWriteConst()");

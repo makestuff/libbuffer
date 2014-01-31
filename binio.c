@@ -23,10 +23,10 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 {
 	BufferStatus retVal = BUF_SUCCESS;
 	BufferStatus bStatus;
-	uint32 length;
-	uint32 actualLength;
+	size_t length;
+	size_t actualLength;
 	long ftellResult;
-	const uint32 currentLength = self->length;
+	const size_t currentLength = self->length;
 	FILE *file = fopen(fileName, "rb");
 	if ( !file ) {
 		errRenderStd(error);
@@ -44,11 +44,11 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 		errPrefix(error, "bufAppendFromBinaryFile()");
 		FAIL(BUF_FTELL, cleanup);
 	}
-	length = (uint32)ftellResult;
+	length = (size_t)ftellResult;
 	bStatus = bufAppendConst(self, 0x00, length, error);
 	CHECK_STATUS(bStatus, bStatus, cleanup, "bufAppendFromBinaryFile()");
 	rewind(file);
-	actualLength = (uint32)fread(self->data + currentLength, 1, length, file);
+	actualLength = fread(self->data + currentLength, 1, length, file);
 	if ( actualLength != length ) {
 		CHECK_STATUS(
 			feof(file), BUF_FEOF, cleanup,
@@ -67,18 +67,18 @@ cleanup:
 }
 
 DLLEXPORT(BufferStatus) bufWriteBinaryFile(
-	const struct Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
+	const struct Buffer *self, const char *fileName, size_t bufAddress, size_t count,
 	const char **error)
 {
 	BufferStatus retVal = BUF_SUCCESS;
-	uint32 actualLength;
+	size_t actualLength;
 	FILE *file = fopen(fileName, "wb");
 	if ( !file ) {
 		errRenderStd(error);
 		errPrefix(error, "bufWriteBinaryFile()");
 		FAIL(BUF_FOPEN, cleanup);
 	}
-	actualLength = (uint32)fwrite(self->data + bufAddress, 1, count, file);
+	actualLength = fwrite(self->data + bufAddress, 1, count, file);
 	if ( actualLength != count ) {
 		errRenderStd(error);
 		errPrefix(error, "bufWriteBinaryFile()");

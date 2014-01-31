@@ -44,8 +44,8 @@ extern "C" {
 	 */	
 	struct Buffer {
 		uint8 *data;
-		uint32 length;
-		uint32 capacity;
+		size_t length;
+		size_t capacity;
 		uint8 fill;
 	};
 	///@endcond
@@ -108,7 +108,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufInitialise(
-		struct Buffer *self, uint32 initialSize, uint8 fill, const char **error
+		struct Buffer *self, size_t initialSize, uint8 fill, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -285,7 +285,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufAppendConst(
-		struct Buffer *self, uint8 value, uint32 count, const char **error
+		struct Buffer *self, uint8 value, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -306,7 +306,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufAppendBlock(
-		struct Buffer *self, const uint8 *ptr, uint32 count, const char **error
+		struct Buffer *self, const uint8 *ptr, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -328,7 +328,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteByte(
-		struct Buffer *self, uint32 offset, uint8 byte, const char **error
+		struct Buffer *self, size_t offset, uint8 byte, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -350,7 +350,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteWordLE(
-		struct Buffer *self, uint32 offset, uint16 word, const char **error
+		struct Buffer *self, size_t offset, uint16 word, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -372,7 +372,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteWordBE(
-		struct Buffer *self, uint32 offset, uint16 word, const char **error
+		struct Buffer *self, size_t offset, uint16 word, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -394,7 +394,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteLongLE(
-		struct Buffer *self, uint32 offset, uint32 lword, const char **error
+		struct Buffer *self, size_t offset, uint32 lword, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -416,7 +416,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteLongBE(
-		struct Buffer *self, uint32 offset, uint32 lword, const char **error
+		struct Buffer *self, size_t offset, uint32 lword, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -439,7 +439,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteConst(
-		struct Buffer *self, uint32 offset, uint8 value, uint32 count, const char **error
+		struct Buffer *self, size_t offset, uint8 value, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -462,7 +462,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteBlock(
-		struct Buffer *self, uint32 offset, const uint8 *ptr, uint32 count, const char **error
+		struct Buffer *self, size_t offset, const uint8 *ptr, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 	//@}
 
@@ -516,7 +516,7 @@ extern "C" {
 	 *     - \c BUF_FERROR if the file could not be written to.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteBinaryFile(
-		const struct Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
+		const struct Buffer *self, const char *fileName, size_t bufAddress, size_t count,
 		const char **error
 	) WARN_UNUSED_RESULT;
 	//@}
