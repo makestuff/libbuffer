@@ -43,7 +43,7 @@ TEST(BinIO_testReadExistingFile) {
 	status = bufAppendFromBinaryFile(&buf, FILENAME, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(strlen(DATA), buf.length);
-	CHECK_ARRAY_EQUAL(DATA, buf.data, buf.length);
+	CHECK_ARRAY_EQUAL(DATA, buf.data, (int)buf.length);
 	status = bufAppendFromBinaryFile(&buf, FILENAME, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(2 * strlen(DATA), buf.length);

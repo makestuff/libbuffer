@@ -229,9 +229,9 @@ void testRoundTrip(const char *firstLine, ...) {
 	status = bufReadFromIntelHexFile(&readbackData, &readbackMask, FILENAME, NULL);
 	CHECK_EQUAL(BUF_SUCCESS, status);
 	CHECK_EQUAL(data.length, readbackData.length);
-	CHECK_ARRAY_EQUAL(data.data, readbackData.data, data.length);
+	CHECK_ARRAY_EQUAL(data.data, readbackData.data, (int)data.length);
 	CHECK_EQUAL(mask.length, readbackMask.length);
-	CHECK_ARRAY_EQUAL(mask.data, readbackMask.data, mask.length);
+	CHECK_ARRAY_EQUAL(mask.data, readbackMask.data, (int)mask.length);
 	
 	bufDestroy(&readbackMask);
 	bufDestroy(&readbackData);
@@ -295,7 +295,7 @@ void testDeriveWriteMap(const char *inputData, const char *expectedWriteMap) {
 			mask.data[i] = '.';
 		}
 	}
-	CHECK_ARRAY_EQUAL(expectedWriteMap, mask.data, mask.length);
+	CHECK_ARRAY_EQUAL(expectedWriteMap, mask.data, (int)mask.length);
 	bufDestroy(&data);
 	bufDestroy(&mask);
 }
