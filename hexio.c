@@ -209,7 +209,7 @@ DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 	FILE *file = fopen(fileName, "rb");
 	if ( !file ) {
 		errRenderStd(error);
-		CHECK_STATUS(true, BUF_FOPEN, cleanup, "bufReadFromIntelHexFile()");
+		CHECK_STATUS(true, BUF_FOPEN, exit, "bufReadFromIntelHexFile()");
 	}
 
 	// Clear the existing data in the buffer, if any.
@@ -245,6 +245,7 @@ cleanup:
 	// Close the file and exit
 	//
 	fclose(file);
+exit:
 	return retVal;
 }
 
