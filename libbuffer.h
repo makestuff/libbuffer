@@ -44,8 +44,8 @@ extern "C" {
 	 */	
 	struct Buffer {
 		uint8 *data;
-		uint32 length;
-		uint32 capacity;
+		size_t length;
+		size_t capacity;
 		uint8 fill;
 	};
 	///@endcond
@@ -108,7 +108,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufInitialise(
-		struct Buffer *self, uint32 initialSize, uint8 fill, const char **error
+		struct Buffer *self, size_t initialSize, uint8 fill, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -285,7 +285,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufAppendConst(
-		struct Buffer *self, uint8 value, uint32 count, const char **error
+		struct Buffer *self, uint8 value, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -306,7 +306,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufAppendBlock(
-		struct Buffer *self, const uint8 *ptr, uint32 count, const char **error
+		struct Buffer *self, const uint8 *ptr, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -328,7 +328,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteByte(
-		struct Buffer *self, uint32 offset, uint8 byte, const char **error
+		struct Buffer *self, size_t offset, uint8 byte, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -350,7 +350,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteWordLE(
-		struct Buffer *self, uint32 offset, uint16 word, const char **error
+		struct Buffer *self, size_t offset, uint16 word, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -372,7 +372,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteWordBE(
-		struct Buffer *self, uint32 offset, uint16 word, const char **error
+		struct Buffer *self, size_t offset, uint16 word, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -394,7 +394,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteLongLE(
-		struct Buffer *self, uint32 offset, uint32 lword, const char **error
+		struct Buffer *self, size_t offset, uint32 lword, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -416,7 +416,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteLongBE(
-		struct Buffer *self, uint32 offset, uint32 lword, const char **error
+		struct Buffer *self, size_t offset, uint32 lword, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -439,7 +439,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteConst(
-		struct Buffer *self, uint32 offset, uint8 value, uint32 count, const char **error
+		struct Buffer *self, size_t offset, uint8 value, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -462,7 +462,7 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteBlock(
-		struct Buffer *self, uint32 offset, const uint8 *ptr, uint32 count, const char **error
+		struct Buffer *self, size_t offset, const uint8 *ptr, size_t count, const char **error
 	) WARN_UNUSED_RESULT;
 	//@}
 
@@ -489,7 +489,8 @@ extern "C" {
 	 *     - \c BUF_SUCCESS if the operation completed successfully.
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 *     - \c BUF_FOPEN if the file could not be opened for reading.
-	 *     - \c BUF_FSEEK if the file could not be fseek()'d.
+	 *     - \c BUF_FSEEK if the file could not be fseek()'d.	
+	 *     - \c BUF_FTELL if the file could not be ftell()'d.
 	 *     - \c BUF_FEOF if the file could not be feof()'d.
 	 *     - \c BUF_FERROR if the file could not be fread().
 	 */
@@ -515,7 +516,7 @@ extern "C" {
 	 *     - \c BUF_FERROR if the file could not be written to.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteBinaryFile(
-		const struct Buffer *self, const char *fileName, uint32 bufAddress, uint32 count,
+		const struct Buffer *self, const char *fileName, size_t bufAddress, size_t count,
 		const char **error
 	) WARN_UNUSED_RESULT;
 	//@}
@@ -545,18 +546,18 @@ extern "C" {
 	 *     - \c BUF_NO_MEM if an allocation error occurred.
 	 *     - \c BUF_FOPEN if the file could not be opened for reading.
 	 *     - \c HEX_EMPTY_FILE if the file was found to be empty.
-	 *     - \c HEX_MISSING_EOF if the file was missing its I8HEX EOF record.
 	 *     - \c HEX_JUNK_START_CODE if a line starts with something other than ":".
 	 *     - \c HEX_JUNK_BYTE_COUNT if a byte count could not be parsed.
 	 *     - \c HEX_JUNK_ADDR_MSB if an address MSB could not be parsed.
 	 *     - \c HEX_JUNK_ADDR_LSB if an address LSB could not be parsed.
 	 *     - \c HEX_JUNK_REC_TYPE if a record type could not be parsed.
+	 *     - \c HEX_BAD_REC_TYPE if an unsupported record type was encountered.
 	 *     - \c HEX_JUNK_DATA_BYTE if a data byte could not be parsed.
 	 *     - \c HEX_JUNK_CHECKSUM if a checksum could not be parsed.
 	 *     - \c HEX_BAD_CHECKSUM if a line checksum did not match the line.
 	 *     - \c HEX_CORRUPT_LINE if a line's reconstruction did not match the original.
+	 *     - \c HEX_MISSING_EOF if the file was missing its I8HEX EOF record.
 	 *     - \c HEX_BAD_EXT_SEG if an EXT_SEG record was invalid.
-	 *     - \c HEX_BAD_REC_TYPE if an unsupported record type was encountered.
 	 */
 	DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 		struct Buffer *destData, struct Buffer *destMask, const char *fileName, const char **error
@@ -586,6 +587,7 @@ extern "C" {
 	 *     - \c BUF_SUCCESS if the operation completed successfully.
 	 *     - \c BUF_NO_MEM if an allocation error occurred during generation of the derived mask.
 	 *     - \c BUF_FOPEN if the file could not be opened for writing.
+	 *     - \c HEX_BAD_EXT_SEG if an EXT_SEG record was invalid.
 	 */
 	DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 		const struct Buffer *sourceData, const struct Buffer *sourceMask,

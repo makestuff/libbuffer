@@ -49,6 +49,7 @@ BufferStatus bufProcessLine(
 	const char *sourceLine, uint32 lineNumber, struct Buffer *destData, struct Buffer *destMask,
 	uint32 *segment, uint8 *recordType, const char **error)
 {
+	BufferStatus retVal = BUF_SUCCESS;
 	char reconstructedLine[LINE_MAX];
 	uint8 thisByte;
 	uint8 i, byteCount;
@@ -62,56 +63,56 @@ BufferStatus bufProcessLine(
 	p = sourceLine;
 	// Read the start code - must be ':'
 	//
-	if ( *p++ != ':' ) {
-		errRender(error, "Junk start code at line %lu", lineNumber);
-		return HEX_JUNK_START_CODE;
-	}
+	CHECK_STATUS(
+		*p++ != ':', HEX_JUNK_START_CODE, cleanup,
+		"bufProcessLine(): Junk start code at line %lu", lineNumber
+	);
 	
 	// Read the byte count
 	//
-	if ( getHexByte(p, &byteCount) ) {
-		errRender(error, "Junk byte count at line %lu", lineNumber);
-		return HEX_JUNK_BYTE_COUNT;
-	}
+	CHECK_STATUS(
+		getHexByte(p, &byteCount), HEX_JUNK_BYTE_COUNT, cleanup,
+		"bufProcessLine(): Junk byte count at line %lu", lineNumber
+	);
 	p += 2;
 	calculatedChecksum = byteCount;
 	
 	// Read the MSB of the address
 	//
-	if ( getHexByte(p, &thisByte) ) {
-		errRender(error, "Junk address MSB at line %lu", lineNumber);
-		return HEX_JUNK_ADDR_MSB;
-	}
+	CHECK_STATUS(
+		getHexByte(p, &thisByte), HEX_JUNK_ADDR_MSB, cleanup,
+		"bufProcessLine(): Junk address MSB at line %lu", lineNumber
+	);
 	p += 2;
 	address = (uint16)(thisByte << 8);
 	calculatedChecksum = (uint8)(calculatedChecksum + thisByte);
 	
 	// Read the LSB of the address
 	//
-	if ( getHexByte(p, &thisByte) ) {
-		errRender(error, "Junk address LSB at line %lu", lineNumber);
-		return HEX_JUNK_ADDR_LSB;
-	}
+	CHECK_STATUS(
+		getHexByte(p, &thisByte), HEX_JUNK_ADDR_LSB, cleanup,
+		"bufProcessLine(): Junk address LSB at line %lu", lineNumber
+	);
 	p += 2;
 	address = (uint16)(address | thisByte);
 	calculatedChecksum = (uint8)(calculatedChecksum + thisByte);
 	
 	// Read the record type
 	//
-	if ( getHexByte(p, recordType) ) {
-		errRender(error, "Junk record type at line %lu", lineNumber);
-		return HEX_JUNK_REC_TYPE;
-	}
+	CHECK_STATUS(
+		getHexByte(p, recordType), HEX_JUNK_REC_TYPE, cleanup,
+		"bufProcessLine(): Junk record type at line %lu", lineNumber
+	);
 	p += 2;
 	calculatedChecksum = (uint8)(calculatedChecksum + *recordType);
 	
 	// Read the data
 	//
 	for ( i = 0; i < byteCount; i++ ) {
-		if ( getHexByte(p, &thisByte) ) {
-			errRender(error, "Junk data byte %d at line %lu", i, lineNumber);
-			return HEX_JUNK_DATA_BYTE;
-		}
+		CHECK_STATUS(
+			getHexByte(p, &thisByte), HEX_JUNK_DATA_BYTE, cleanup,
+			"bufProcessLine(): Junk data byte %d at line %lu", i, lineNumber
+		);
 		p += 2;
 		dataBytes[i] = thisByte;
 		calculatedChecksum = (uint8)(calculatedChecksum + thisByte);
@@ -119,20 +120,19 @@ BufferStatus bufProcessLine(
 	
 	// Read the checksum
 	//
-	if ( getHexByte(p, &readChecksum) ) {
-		errRender(error, "Junk checksum at line %lu", lineNumber);
-		return HEX_JUNK_CHECKSUM;
-	}
+	CHECK_STATUS(
+		getHexByte(p, &readChecksum), HEX_JUNK_CHECKSUM, cleanup,
+		"bufProcessLine(): Junk checksum at line %lu", lineNumber
+	);
 	
 	// Calculate the two's complement of the checksum
 	//
 	calculatedChecksum = (uint8)(256 - calculatedChecksum);
-	if ( readChecksum != calculatedChecksum ) {
-		errRender(
-			error, "Read checksum 0x%02X differs from calculated checksum 0x%02X at line %lu",
-			readChecksum, calculatedChecksum, lineNumber);
-		return HEX_BAD_CHECKSUM;
-	}
+	CHECK_STATUS(
+		readChecksum != calculatedChecksum, HEX_BAD_CHECKSUM, cleanup,
+		"bufProcessLine(): Read checksum 0x%02X differs from calculated checksum 0x%02X at line %lu",
+		readChecksum, calculatedChecksum, lineNumber
+	);
 	
 	// Recreate the input data
 	//
@@ -144,58 +144,60 @@ BufferStatus bufProcessLine(
 	while ( *p && *p != 0x0D && *p != 0x0A ) {
 		p++;
 	}
-	if ( strncmp(sourceLine, reconstructedLine, (size_t)(p - sourceLine)) ) {
-		errRender(
-			error, "Some corruption detected at line %lu - some junk at the end of the line perhaps?",
-			lineNumber);
-		return HEX_CORRUPT_LINE;
-	}
-	
+	CHECK_STATUS(
+		strncmp(sourceLine, reconstructedLine, (size_t)(p - sourceLine)), HEX_CORRUPT_LINE, cleanup,
+		"bufProcessLine(): Some corruption detected at line %lu - some junk at the end of the line perhaps?",
+		lineNumber
+	);
+	CHECK_STATUS(
+		*recordType == START_SEG_RECORD, HEX_BAD_REC_TYPE, cleanup,
+		"bufProcessLine(): Record type START_SEG_RECORD not supported at line %lu", lineNumber
+	);
+	CHECK_STATUS(
+		*recordType == EXT_LIN_RECORD, HEX_BAD_REC_TYPE, cleanup,
+		"bufProcessLine(): Record type EXT_LIN_RECORD, not supported at line %lu", lineNumber
+	);
+	CHECK_STATUS(
+		*recordType == START_LIN_RECORD, HEX_BAD_REC_TYPE, cleanup,
+		"bufProcessLine(): Record type START_LIN_RECORD, not supported at line %lu", lineNumber
+	);
 	if ( *recordType == DATA_RECORD ) {
 		// Write into the binary buffer
 		//
 		status = bufWriteBlock(destData, *segment + address, dataBytes, byteCount, error);
-		if ( status != BUF_SUCCESS ) {
-			return status;
-		}
+		CHECK_STATUS(status, status, cleanup, "bufProcessLine()");
 		if ( destMask ) {
 			status = bufWriteConst(destMask, *segment + address, 0x01, byteCount, error);
-			if ( status != BUF_SUCCESS ) {
-				return status;
-			}
+			CHECK_STATUS(status, status, cleanup, "bufProcessLine()");
 		}
-		return BUF_SUCCESS;
+		retVal = BUF_SUCCESS;
 	} else if ( *recordType == EOF_RECORD ) {
-		return BUF_SUCCESS;
+		retVal = BUF_SUCCESS;
 	} else if ( *recordType == EXT_SEG_RECORD ) {
-		if ( address != 0x0000 || byteCount != 2 ) {
-			errRender(
-				error, "For record type EXT_SEG_RECORD, address must be 0x0000 and byteCount must be 0x02 at line %lu",
-				lineNumber);
-			return HEX_BAD_EXT_SEG;
-		}
+		CHECK_STATUS(
+			address != 0x0000 || byteCount != 2, HEX_BAD_EXT_SEG, cleanup,
+			"bufProcessLine(): For record type EXT_SEG_RECORD, address must be 0x0000 and byteCount must be 0x02 at line %lu",
+			lineNumber
+		);
 		*segment = (uint32)(((dataBytes[0] << 8) + dataBytes[1]) << 4);
-		return BUF_SUCCESS;
-	} else if ( *recordType == START_SEG_RECORD ) {
-		errRender(error, "Record type START_SEG_RECORD not supported at line %lu", lineNumber);
-		return HEX_BAD_REC_TYPE;
-	} else if ( *recordType == EXT_LIN_RECORD ) {
-		errRender(error, "Record type EXT_LIN_RECORD not supported at line %lu", lineNumber);
-		return HEX_BAD_REC_TYPE;
-	} else if ( *recordType == START_LIN_RECORD ) {
-		errRender(error, "Record type START_LIN_RECORD not supported at line %lu", lineNumber);
-		return HEX_BAD_REC_TYPE;
+		retVal = BUF_SUCCESS;
 	} else {
-		errRender(error, "Record type 0x%02X not supported at line %lu", *recordType, lineNumber);
-		return HEX_BAD_REC_TYPE;
+		CHECK_STATUS(
+			true, HEX_BAD_REC_TYPE, cleanup,
+			"bufProcessLine(): Record type 0x%02X not supported at line %lu", *recordType, lineNumber
+		);
 	}
+cleanup:
+	return retVal;
 }
 
 // Read Intel Hex records from a file.
+// TODO: Handle read errors
 //
 DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 	struct Buffer *destData, struct Buffer *destMask, const char *fileName, const char **error)
 {
+	BufferStatus retVal = BUF_SUCCESS;
 	uint32 lineNumber;
 	uint32 segment = 0x00000000;
 	char readLine[LINE_MAX];
@@ -207,7 +209,7 @@ DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 	FILE *file = fopen(fileName, "rb");
 	if ( !file ) {
 		errRenderStd(error);
-		return BUF_FOPEN;
+		CHECK_STATUS(true, BUF_FOPEN, exit, "bufReadFromIntelHexFile()");
 	}
 
 	// Clear the existing data in the buffer, if any.
@@ -220,37 +222,35 @@ DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 	// Iterate over every line
 	//
 	lineNumber = 1;
-	if ( !fgets(readLine, LINE_MAX, file) ) {
-		errRender(error, "Empty file!");
-		fclose(file);
-		return HEX_EMPTY_FILE;
-	}
+	CHECK_STATUS(
+		!fgets(readLine, LINE_MAX, file), HEX_EMPTY_FILE, cleanup,
+		"bufReadFromIntelHexFile(): Empty file!"
+	);
 	do {
 		status = bufProcessLine(
 			readLine, lineNumber, destData, destMask, &segment, &recordType, error);
-		if ( status != BUF_SUCCESS ) {
-			fclose(file);
-			return status;
-		}
+		CHECK_STATUS(status, status, cleanup, "bufReadFromIntelHexFile()");
 		lineNumber++;
 	} while ( (recordType == DATA_RECORD || recordType == EXT_SEG_RECORD) &&
 	          fgets(readLine, LINE_MAX, file) );
 
 	// Make sure the file terminated correctly
 	//
-	if ( recordType != EOF_RECORD ) {
-		errRender(error, "Premature end of file - no EOF_RECORD found!");
-		fclose(file);
-		return HEX_MISSING_EOF;
-	}
+	CHECK_STATUS(
+		recordType != EOF_RECORD, HEX_MISSING_EOF, cleanup,
+		"bufReadFromIntelHexFile(): Premature end of file - no EOF_RECORD found!"
+	);
 
+cleanup:
 	// Close the file and exit
 	//
 	fclose(file);
-	return BUF_SUCCESS;
+exit:
+	return retVal;
 }
 
 // Write the supplied byte as two hex digits
+// TODO: Handle write errors
 //
 static void writeHexByte(uint8 byte, FILE *file) {
 	fputc(getHexUpperNibble(byte), file);
@@ -258,6 +258,7 @@ static void writeHexByte(uint8 byte, FILE *file) {
 }
 
 // Write the supplied word as four hex digits, in big-endian format (most significant byte first).
+// TODO: Handle write errors
 //
 static void writeHexWordBE(uint16 word, FILE *file) {
 	fputc(getHexUpperNibble((uint8)(word >> 8)), file);
@@ -269,13 +270,12 @@ static void writeHexWordBE(uint16 word, FILE *file) {
 BufferStatus bufDeriveMask(
 	const struct Buffer *sourceData, struct Buffer *destMask, const char **error)
 {
-	uint32 address, count, i;
+	BufferStatus retVal = BUF_SUCCESS;
+	size_t address, count, i;
 	BufferStatus bStatus;
 	bufZeroLength(destMask);
 	bStatus = bufAppendConst(destMask, 0x01, sourceData->length, error);
-	if ( bStatus != BUF_SUCCESS ) {
-		return bStatus;
-	}
+	CHECK_STATUS(bStatus, bStatus, cleanup, "bufDeriveMask()");
 	address = 0x00000000;
 	while ( address < destMask->length ) {
 		while ( address < destMask->length && sourceData->data[address] != sourceData->fill ) {
@@ -297,28 +297,30 @@ BufferStatus bufDeriveMask(
 		}
 		address += count;
 	}
-	return BUF_SUCCESS;
+cleanup:
+	return retVal;
 }
 
 // Write the supplied buffer as Intel hex records with the stated line length to a file, using the
 // supplied mask. If the mask is null, one is derived from the data, either compressed or
 // uncompressed.
+// TODO: Handle write errors
 //
 DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 	const struct Buffer *sourceData, const struct Buffer *sourceMask, const char *fileName,
 	uint8 lineLength, bool compress, const char **error)
 {
-	BufferStatus status, returnCode = BUF_SUCCESS;
+	BufferStatus status, retVal = BUF_SUCCESS;
 	struct Buffer tmpSourceMask;
 	bool usedTmpSourceMask = false;
-	uint32 address = 0x00000000;
-	uint32 ceiling = 0x00000000;
+	size_t address = 0x00000000;
+	size_t ceiling = 0x00000000;
 	uint32 segment;
 	uint8 i, calculatedChecksum, maxBytesToWrite, bytesToWrite;
 	FILE *file = fopen(fileName, "wb");
 	if ( !file ) {
 		errRenderStd(error);
-		return BUF_FOPEN;
+		CHECK_STATUS(true, BUF_FOPEN, exit, "bufWriteToIntelHexFile()");
 	}
 	if ( !sourceMask ) {
 		// No sourceMask was supplied; we can either assume we need to write everything,
@@ -326,24 +328,15 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 		// of the sourceData's fill byte.
 		//
 		status = bufInitialise(&tmpSourceMask, 1024, 0x00, error);
-		if ( status != BUF_SUCCESS ) {
-			returnCode = status;
-			goto cleanupFile;
-		}
+		CHECK_STATUS(status, status, cleanupFile, "bufWriteToIntelHexFile()");
 		sourceMask = &tmpSourceMask;
 		usedTmpSourceMask = true;
 		if ( compress ) {
 			status = bufDeriveMask(sourceData, &tmpSourceMask, error);
-			if ( status != BUF_SUCCESS ) {
-				returnCode = status;
-				goto cleanupBuffer;
-			}
+			CHECK_STATUS(status, status, cleanupBuffer, "bufWriteToIntelHexFile()");
 		} else {
 			status = bufAppendConst(&tmpSourceMask, 0x01, sourceData->length, error);
-			if ( status != BUF_SUCCESS ) {
-				returnCode = status;
-				goto cleanupBuffer;
-			}
+			CHECK_STATUS(status, status, cleanupBuffer, "bufWriteToIntelHexFile()");
 		}
 	}
 
@@ -390,12 +383,11 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 			address += bytesToWrite;
 		}
 		if ( address < sourceMask->length ) {
-			segment = address >> 4;
-			if ( segment > 0xFFFF ) {
-				errRender(error, "Segment addresses > 0xFFFF are not supported");
-				returnCode = HEX_BAD_EXT_SEG;
-				goto cleanupBuffer;
-			}
+			segment = (uint32)(address >> 4);
+			CHECK_STATUS(
+				segment > 0xFFFF, HEX_BAD_EXT_SEG, cleanupBuffer,
+				"bufWriteToIntelHexFile(): Segment addresses > 0xFFFF are not supported"
+			);
 			calculatedChecksum =
 				(uint8)(256 - 2 - EXT_SEG_RECORD - (segment >> 8) - (segment & 0xFF));
 			fwrite(":020000", 1, 7, file);
@@ -411,6 +403,7 @@ cleanupBuffer:
 		bufDestroy(&tmpSourceMask);
 	}
 cleanupFile:
-	fclose(file);	
-	return returnCode;
+	fclose(file);
+exit:
+	return retVal;
 }
