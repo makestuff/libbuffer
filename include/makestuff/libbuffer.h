@@ -29,7 +29,7 @@
 #ifndef LIBBUFFER_H
 #define LIBBUFFER_H
 
-#include <makestuff.h>
+#include <makestuff/common.h>
 
 #ifdef __cplusplus
 extern "C" {

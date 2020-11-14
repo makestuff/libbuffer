@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stdio.h>
-#include <liberror.h>
-#include "libbuffer.h"
+#include <makestuff/liberror.h>
+#include <makestuff/libbuffer.h>
 
 DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 	struct Buffer *self, const char *fileName, const char **error)
@@ -31,18 +31,18 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 	if ( !file ) {
 		errRenderStd(error);
 		errPrefix(error, "bufAppendFromBinaryFile()");
-		FAIL(BUF_FOPEN, cleanup);
+		FAIL_RET(BUF_FOPEN, cleanup);
 	}
 	if ( fseek(file, 0, SEEK_END) ) {
 		errRenderStd(error);
 		errPrefix(error, "bufAppendFromBinaryFile()");
-		FAIL(BUF_FSEEK, cleanup);
+		FAIL_RET(BUF_FSEEK, cleanup);
 	}
 	ftellResult = ftell(file);
 	if ( ftellResult < 0 ) {
 		errRenderStd(error);
 		errPrefix(error, "bufAppendFromBinaryFile()");
-		FAIL(BUF_FTELL, cleanup);
+		FAIL_RET(BUF_FTELL, cleanup);
 	}
 	length = (size_t)ftellResult;
 	bStatus = bufAppendConst(self, 0x00, length, error);
@@ -56,7 +56,7 @@ DLLEXPORT(BufferStatus) bufAppendFromBinaryFile(
 		if ( ferror(file) ) {
 			errRenderStd(error);
 			errPrefix(error, "bufAppendFromBinaryFile()");
-			FAIL(BUF_FERROR, cleanup);
+			FAIL_RET(BUF_FERROR, cleanup);
 		}
 	}
 cleanup:
@@ -76,13 +76,13 @@ DLLEXPORT(BufferStatus) bufWriteBinaryFile(
 	if ( !file ) {
 		errRenderStd(error);
 		errPrefix(error, "bufWriteBinaryFile()");
-		FAIL(BUF_FOPEN, cleanup);
+		FAIL_RET(BUF_FOPEN, cleanup);
 	}
 	actualLength = fwrite(self->data + bufAddress, 1, count, file);
 	if ( actualLength != count ) {
 		errRenderStd(error);
 		errPrefix(error, "bufWriteBinaryFile()");
-		FAIL(BUF_FERROR, cleanup);
+		FAIL_RET(BUF_FERROR, cleanup);
 	}
 cleanup:
 	if ( file ) {

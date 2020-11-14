@@ -24,8 +24,8 @@
 //
 #include <stdio.h>
 #include <string.h>
-#include <liberror.h>
-#include "libbuffer.h"
+#include <makestuff/liberror.h>
+#include <makestuff/libbuffer.h>
 #include "conv.h"
 #include "private.h"
 
@@ -182,8 +182,8 @@ BufferStatus bufProcessLine(
 		*segment = (uint32)(((dataBytes[0] << 8) + dataBytes[1]) << 4);
 		retVal = BUF_SUCCESS;
 	} else {
-		CHECK_STATUS(
-			true, HEX_BAD_REC_TYPE, cleanup,
+		FAIL_RET(
+			HEX_BAD_REC_TYPE, cleanup,
 			"bufProcessLine(): Record type 0x%02X not supported at line %lu", *recordType, lineNumber
 		);
 	}
@@ -209,7 +209,7 @@ DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
 	FILE *file = fopen(fileName, "rb");
 	if ( !file ) {
 		errRenderStd(error);
-		CHECK_STATUS(true, BUF_FOPEN, exit, "bufReadFromIntelHexFile()");
+		FAIL_RET(BUF_FOPEN, exit, "bufReadFromIntelHexFile()");
 	}
 
 	// Clear the existing data in the buffer, if any.
@@ -320,7 +320,7 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
 	FILE *file = fopen(fileName, "wb");
 	if ( !file ) {
 		errRenderStd(error);
-		CHECK_STATUS(true, BUF_FOPEN, exit, "bufWriteToIntelHexFile()");
+		FAIL_RET(BUF_FOPEN, exit, "bufWriteToIntelHexFile()");
 	}
 	if ( !sourceMask ) {
 		// No sourceMask was supplied; we can either assume we need to write everything,

@@ -14,22 +14,32 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PRIVATE_H
-#define PRIVATE_H
+#ifndef CONV_H
+#define CONV_H
 
-#include <makestuff.h>
-#include "libbuffer.h"
+#include <makestuff/common.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-	BufferStatus bufProcessLine(
-		const char *sourceLine, uint32 lineNumber, struct Buffer *destData, struct Buffer *destMask,
-		uint32 *seg, uint8 *recordType, const char **error
-	) WARN_UNUSED_RESULT;
-	BufferStatus bufDeriveMask(
-		const struct Buffer *sourceData, struct Buffer *destMask, const char **error
-	) WARN_UNUSED_RESULT;
+	// Updates *outputNibble with the nibble represented by the supplied ascii hex digit.
+	// Return false on success or true for illegal char.
+	//
+	bool getHexNibble(char hexDigit, uint8 *outputNibble);
+	
+	// Updates *outputByte with the byte represented by the two ascii hex digits pointed to by hexDigitPair.
+	// Return false on success or true for illegal char.
+	//
+	bool getHexByte(const char *hexDigitPair, uint8 *outputByte);
+
+	// Return the ascii hex digit representing the most significant nibble of the supplied byte.
+	//
+	char getHexUpperNibble(uint8 byte);
+
+	// Return the ascii hex digit representing the least significant nibble of the supplied byte.
+	//
+	char getHexLowerNibble(uint8 byte);
+
 #ifdef __cplusplus
 }
 #endif

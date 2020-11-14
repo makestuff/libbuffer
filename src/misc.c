@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <UnitTest++.h>
+#include <makestuff/liberror.h>
 
-int main() {
-	return UnitTest::RunAllTests();
+DLLEXPORT(void) bufFreeError(const char *err) {
+	errFree(err);
 }

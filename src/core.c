@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <liberror.h>
-#include "libbuffer.h"
+#include <makestuff/liberror.h>
+#include <makestuff/libbuffer.h>
 
 // Initialise the promRecords structure.
 // Returns BUF_SUCCESS or BUF_NO_MEM.

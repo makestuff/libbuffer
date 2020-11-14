@@ -14,78 +14,76 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <string.h>
+#include <gtest/gtest.h>
+#include <cstring>
 #include <fstream>
-#include <UnitTest++.h>
-#include "../libbuffer.h"
+#include <makestuff/libbuffer.h>
 
-using namespace std;
-
-TEST(BinIO_testReadNonExistentFile) {
+TEST(BinIO, testReadNonExistentFile) {
 	Buffer buf;
 	BufferStatus status = bufInitialise(&buf, 8, 0, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
+	ASSERT_EQ(BUF_SUCCESS, status);
 	status = bufAppendFromBinaryFile(&buf, "nonExistentFile.bin", NULL);
-	CHECK_EQUAL(BUF_FOPEN, status);
+	ASSERT_EQ(BUF_FOPEN, status);
 	bufDestroy(&buf);
 }
 
-TEST(BinIO_testReadExistingFile) {
+TEST(BinIO, testReadExistingFile) {
 	const char *const FILENAME = "tmpFile.bin";
 	const char *const DATA = "Just some test data";
-	ofstream file;
+	std::ofstream file;
 	Buffer buf;
 	BufferStatus status = bufInitialise(&buf, 8, 0, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
-	file.open(FILENAME, ios::out|ios::binary);
+	ASSERT_EQ(BUF_SUCCESS, status);
+	file.open(FILENAME, std::ios::out|std::ios::binary);
 	file << DATA;
 	file.close();
 	status = bufAppendFromBinaryFile(&buf, FILENAME, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
-	CHECK_EQUAL(strlen(DATA), buf.length);
-	CHECK_ARRAY_EQUAL(DATA, buf.data, (int)buf.length);
+	ASSERT_EQ(BUF_SUCCESS, status);
+	ASSERT_EQ(std::strlen(DATA), buf.length);
+	ASSERT_EQ(std::memcmp(DATA, buf.data, buf.length), 0);
 	status = bufAppendFromBinaryFile(&buf, FILENAME, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
-	CHECK_EQUAL(2 * strlen(DATA), buf.length);
-	CHECK_ARRAY_EQUAL(DATA, buf.data + strlen(DATA), (int)strlen(DATA));
+	ASSERT_EQ(BUF_SUCCESS, status);
+	ASSERT_EQ(2 * strlen(DATA), buf.length);
+	ASSERT_EQ(std::memcmp(DATA, buf.data + std::strlen(DATA), std::strlen(DATA)), 0);
 	bufDestroy(&buf);
 }
 
-TEST(BinIO_testWriteFile) {
+TEST(BinIO, testWriteFile) {
 	const char *const FILENAME = "tmpFile.bin";
 	const char *const DATA = "Just some test data";
-	ifstream file;
-	streamoff length;
+	std::ifstream file;
+	std::streamoff length;
 	//ifstream::pos_type length;
 	char *fileData;
 	Buffer buf;
 	BufferStatus status = bufInitialise(&buf, 8, 0, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
+	ASSERT_EQ(BUF_SUCCESS, status);
 	status = bufAppendBlock(&buf, (const uint8 *)DATA, strlen(DATA), NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
+	ASSERT_EQ(BUF_SUCCESS, status);
 
 	status = bufWriteBinaryFile(&buf, FILENAME, 0, buf.length, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
-	file.open(FILENAME, ios::in|ios::binary|ios::ate);
-	CHECK(file.is_open());
+	ASSERT_EQ(BUF_SUCCESS, status);
+	file.open(FILENAME, std::ios::in|std::ios::binary|std::ios::ate);
+	ASSERT_TRUE(file.is_open());
 	length = file.tellg();
-	CHECK_EQUAL(strlen(DATA), (size_t)length);
+	ASSERT_EQ(strlen(DATA), (size_t)length);
 	fileData = new char[(unsigned int)length];
-	file.seekg(0, ios::beg);
-	file.read(fileData, (streamsize)length);
+	file.seekg(0, std::ios::beg);
+	file.read(fileData, (std::streamsize)length);
 	file.close();
-	CHECK_ARRAY_EQUAL(DATA, fileData, (int)length);
+	ASSERT_EQ(std::memcmp(DATA, fileData, length), 0);
 
 	status = bufWriteBinaryFile(&buf, FILENAME, 5, 9, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, status);
-	file.open(FILENAME, ios::in|ios::binary|ios::ate);
-	CHECK(file.is_open());
+	ASSERT_EQ(BUF_SUCCESS, status);
+	file.open(FILENAME, std::ios::in|std::ios::binary|std::ios::ate);
+	ASSERT_TRUE(file.is_open());
 	length = file.tellg();
-	CHECK_EQUAL(9, length);
-	file.seekg(0, ios::beg);
-	file.read(fileData, (streamsize)length);
+	ASSERT_EQ(9, length);
+	file.seekg(0, std::ios::beg);
+	file.read(fileData, (std::streamsize)length);
 	file.close();
-	CHECK_ARRAY_EQUAL(DATA+5, fileData, (int)length);
+	ASSERT_EQ(std::memcmp(DATA+5, fileData, length), 0);
 
 	delete[] fileData;
 	bufDestroy(&buf);
