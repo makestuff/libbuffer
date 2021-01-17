@@ -22,23 +22,24 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	// Updates *outputNibble with the nibble represented by the supplied ascii hex digit.
-	// Return false on success or true for illegal char.
-	//
-	bool getHexNibble(char hexDigit, uint8 *outputNibble);
-	
-	// Updates *outputByte with the byte represented by the two ascii hex digits pointed to by hexDigitPair.
-	// Return false on success or true for illegal char.
-	//
-	bool getHexByte(const char *hexDigitPair, uint8 *outputByte);
 
-	// Return the ascii hex digit representing the most significant nibble of the supplied byte.
-	//
-	char getHexUpperNibble(uint8 byte);
+  // Updates *outputNibble with the nibble represented by the supplied ascii hex digit.
+  // Return false on success or true for illegal char.
+  //
+  bool getHexNibble(char hexDigit, uint8 *outputNibble);
 
-	// Return the ascii hex digit representing the least significant nibble of the supplied byte.
-	//
-	char getHexLowerNibble(uint8 byte);
+  // Updates *outputByte with the byte represented by the two ascii hex digits pointed to by hexDigitPair.
+  // Return false on success or true for illegal char.
+  //
+  bool getHexByte(const char *hexDigitPair, uint8 *outputByte);
+
+  // Return the ascii hex digit representing the most significant nibble of the supplied byte.
+  //
+  char getHexUpperNibble(uint8 byte);
+
+  // Return the ascii hex digit representing the least significant nibble of the supplied byte.
+  //
+  char getHexLowerNibble(uint8 byte);
 
 #ifdef __cplusplus
 }

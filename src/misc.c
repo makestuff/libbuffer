@@ -17,5 +17,5 @@
 #include <makestuff/liberror.h>
 
 DLLEXPORT(void) bufFreeError(const char *err) {
-	errFree(err);
+  errFree(err);
 }
