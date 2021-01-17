@@ -148,10 +148,10 @@ cleanup:
 
 // If the data will not fit in the buffer, make the buffer bigger
 //
-#define ENSURE_CAPACITY(prefix)						\
-  if (blockEnd > self->capacity) {					\
-    BufferStatus status = reallocate(self, self->capacity, blockEnd, error); \
-    CHECK_STATUS(status, status, cleanup, prefix);			\
+#define ENSURE_CAPACITY(prefix)                                               \
+  if (blockEnd > self->capacity) {                                            \
+    BufferStatus status = reallocate(self, self->capacity, blockEnd, error);  \
+    CHECK_STATUS(status, status, cleanup, prefix);                            \
   }
 
 DLLEXPORT(BufferStatus) bufAppendByte(struct Buffer *self, uint8 byte, const char **error) {

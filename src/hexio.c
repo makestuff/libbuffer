@@ -231,8 +231,7 @@ DLLEXPORT(BufferStatus) bufReadFromIntelHexFile(
       readLine, lineNumber, destData, destMask, &segment, &recordType, error);
     CHECK_STATUS(status, status, cleanup, "bufReadFromIntelHexFile()");
     lineNumber++;
-  } while ((recordType == DATA_RECORD || recordType == EXT_SEG_RECORD) &&
-	   fgets(readLine, LINE_MAX, file));
+  } while ((recordType == DATA_RECORD || recordType == EXT_SEG_RECORD) && fgets(readLine, LINE_MAX, file));
 
   // Make sure the file terminated correctly
   //
@@ -285,14 +284,12 @@ BufferStatus bufDeriveMask(
       break;
     }
     count = 1;
-    while (address + count < destMask->length &&
-	   sourceData->data[address + count] == sourceData->fill)
-    {
+    while (address + count < destMask->length && sourceData->data[address + count] == sourceData->fill) {
       count++;
     }
     if (count >= 8) {
       for (i = 0; i < count; i++) {
-	destMask->data[address + i] = 0x00;
+        destMask->data[address + i] = 0x00;
       }
     }
     address += count;
@@ -348,23 +345,23 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
     while (address < ceiling) {
       // Find the next run in the sourceMask
       while (address < ceiling && !sourceMask->data[address]) {
-	address++;
+        address++;
       }
       // If we hit the end of the sourceMask, break out of this while loop
       if (address == ceiling) {
-	break;
+        break;
       }
       if (address + lineLength > ceiling) {
-	// there are fewer than lineLength bytes remaining
-	maxBytesToWrite = (uint8)(ceiling - address);
+        // there are fewer than lineLength bytes remaining
+        maxBytesToWrite = (uint8)(ceiling - address);
       } else {
-	// there are lineLength or more bytes remaining
-	maxBytesToWrite = lineLength;
+        // there are lineLength or more bytes remaining
+        maxBytesToWrite = lineLength;
       }
       // find out how many bytes are in this run
       bytesToWrite = 0;
       while (bytesToWrite < maxBytesToWrite && sourceMask->data[address + bytesToWrite]) {
-	bytesToWrite++;
+        bytesToWrite++;
       }
       fputc(':', file);
       writeHexByte(bytesToWrite, file);
@@ -374,8 +371,8 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
       calculatedChecksum = (uint8)(calculatedChecksum + (address >> 8));
       calculatedChecksum = (uint8)(calculatedChecksum + (address & 0xFF));
       for (i = 0; i < bytesToWrite; i++) {
-	writeHexByte(sourceData->data[address + i], file);
-	calculatedChecksum = (uint8)(calculatedChecksum + sourceData->data[address + i]);
+        writeHexByte(sourceData->data[address + i], file);
+        calculatedChecksum = (uint8)(calculatedChecksum + sourceData->data[address + i]);
       }
       calculatedChecksum = (uint8)(256 - calculatedChecksum);
       writeHexByte(calculatedChecksum, file);
@@ -385,11 +382,11 @@ DLLEXPORT(BufferStatus) bufWriteToIntelHexFile(
     if (address < sourceMask->length) {
       segment = (uint32)(address >> 4);
       CHECK_STATUS(
-	segment > 0xFFFF, HEX_BAD_EXT_SEG, cleanupBuffer,
-	"bufWriteToIntelHexFile(): Segment addresses > 0xFFFF are not supported"
+        segment > 0xFFFF, HEX_BAD_EXT_SEG, cleanupBuffer,
+        "bufWriteToIntelHexFile(): Segment addresses > 0xFFFF are not supported"
       );
       calculatedChecksum =
-	(uint8)(256 - 2 - EXT_SEG_RECORD - (segment >> 8) - (segment & 0xFF));
+        (uint8)(256 - 2 - EXT_SEG_RECORD - (segment >> 8) - (segment & 0xFF));
       fwrite(":020000", 1, 7, file);
       writeHexByte(EXT_SEG_RECORD, file);
       writeHexWordBE((uint16)segment, file);
